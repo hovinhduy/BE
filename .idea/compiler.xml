@@ -10,6 +10,15 @@
         <module name="gateway-service" />
         <module name="user-service" />
       </profile>
+      <profile name="Annotation profile for microservices-project" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/unknown/lombok-unknown.jar" />
+        </processorPath>
+        <module name="microservices-project (1) (com.ktpm)" />
+      </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="api-gateway" target="17" />
@@ -20,6 +29,7 @@
       <module name="api-gateway" options="-parameters" />
       <module name="eureka-server" options="-parameters" />
       <module name="gateway-service" options="-parameters" />
+      <module name="microservices-project (1) (com.ktpm)" options="-parameters" />
       <module name="user-service" options="-parameters" />
     </option>
   </component>
