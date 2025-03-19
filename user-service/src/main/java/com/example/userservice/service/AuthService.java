@@ -1,8 +1,8 @@
 package com.example.userservice.service;
 
 import com.example.userservice.dto.AuthRequest;
-import com.example.userservice.dto.AuthResponse;
 import com.example.userservice.dto.RegisterRequest;
+import com.example.userservice.dto.UserRegistrationResponse;
 import com.example.userservice.dto.UserResponse;
 import com.example.userservice.exception.AppException;
 import com.example.userservice.model.User;
@@ -27,7 +27,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
 
     @Transactional
-    public AuthResponse register(@Valid RegisterRequest request) {
+    public UserRegistrationResponse register(@Valid RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new AppException("Email already registered", HttpStatus.CONFLICT);
         }
@@ -39,26 +39,17 @@ public class AuthService {
         user.setRole(User.Role.USER);
 
         User savedUser = userRepository.save(user);
-        String jwt = jwtService.generateToken(savedUser);
 
-        return AuthResponse.builder()
-                .token(jwt)
-                .user(UserResponse.fromUser(savedUser))
-                .build();
+        return UserRegistrationResponse.fromUser(savedUser);
     }
 
-    public AuthResponse login(@Valid AuthRequest request) {
+    public String login(@Valid AuthRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        String jwt = jwtService.generateToken(user);
-
-        return AuthResponse.builder()
-                .token(jwt)
-                .user(UserResponse.fromUser(user))
-                .build();
+        return jwtService.generateToken(user);
     }
 }
