@@ -8,14 +8,14 @@ import lombok.*;
 @Table(name = "product")
 public class Product {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @Column(name = "name")
     private String name;
 
     @Column(name = "price")
-    private double price;
+    private Double price;
 
     @Column(name = "image")
     private String image;
@@ -27,10 +27,10 @@ public class Product {
     private String shortDesc;
 
     @Column(name = "quantity")
-    private int quantity;
+    private Integer quantity;
 
     @Column(name = "soid")
-    private int soid;
+    private Integer soid;
 
     @ManyToOne
     @JoinColumn(name = "category_id")
@@ -43,7 +43,7 @@ public class Product {
     public Product() {
     }
 
-    public Product(String name, double price, String image, String detailDesc, String shortDesc, int quantity, int soid, Category category, Manufacture manufacture){
+    public Product(String name, Double price, String image, String detailDesc, String shortDesc, Integer quantity, Integer soid, Category category, Manufacture manufacture){
         this.name = name;
         this.price = price;
         this.image = image;
@@ -55,12 +55,8 @@ public class Product {
         this.manufacture = manufacture;
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getName() {
@@ -71,11 +67,11 @@ public class Product {
         this.name = name;
     }
 
-    public double getPrice() {
+    public Double getPrice() {
         return price;
     }
 
-    public void setPrice(double price) {
+    public void setPrice(Double price) {
         this.price = price;
     }
 
@@ -103,19 +99,19 @@ public class Product {
         this.shortDesc = shortDesc;
     }
 
-    public int getQuantity() {
+    public Integer getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(int quantity) {
+    public void setQuantity(Integer quantity) {
         this.quantity = quantity;
     }
 
-    public int getSoid() {
+    public Integer getSoid() {
         return soid;
     }
 
-    public void setSoid(int soid) {
+    public void setSoid(Integer soid) {
         this.soid = soid;
     }
 

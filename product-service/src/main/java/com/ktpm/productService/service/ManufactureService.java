@@ -1,7 +1,9 @@
 package com.ktpm.productService.service;
 
 import com.ktpm.productService.model.Manufacture;
+import com.ktpm.productService.model.Product;
 import com.ktpm.productService.repository.ManufactureRepository;
+import com.ktpm.productService.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -9,16 +11,18 @@ import java.util.List;
 @Service
 public class ManufactureService {
     private final ManufactureRepository manufactureRepository;
+    private final ProductRepository productRepository;
 
-    public ManufactureService(ManufactureRepository manufactureRepository) {
+    public ManufactureService(ManufactureRepository manufactureRepository, ProductRepository productRepository) {
         this.manufactureRepository = manufactureRepository;
+        this.productRepository = productRepository;
     }
 
     public List<Manufacture> getAllManufacture() {
         return manufactureRepository.findAll();
     }
 
-    public Manufacture getManufactureById(Long id) {
+    public Manufacture getManufactureById(String id) {
         return manufactureRepository.findById(id).orElse(null);
     }
 
@@ -26,7 +30,10 @@ public class ManufactureService {
         return manufactureRepository.save(manufacture);
     }
 
-    public void deleteManufacture(Long id) {
-        manufactureRepository.deleteById(id);
+    public void deleteManufacture(String id) {
+        Manufacture manufacture = manufactureRepository.findById(id).orElse(null);
+        List<Product> product = productRepository.findByManufacture(manufacture);
+        productRepository.deleteAll(product);
+        manufactureRepository.delete(manufacture);
     }
 }
