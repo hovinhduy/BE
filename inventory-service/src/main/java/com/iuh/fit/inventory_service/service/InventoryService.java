@@ -1,0 +1,36 @@
+package com.iuh.fit.inventory_service.service;
+
+import java.util.List;
+
+import com.iuh.fit.inventory_service.dto.InventoryCheckRequest;
+import com.iuh.fit.inventory_service.dto.InventoryCheckResponse;
+import com.iuh.fit.inventory_service.dto.InventoryDTO;
+import com.iuh.fit.inventory_service.dto.OrderCreatedEvent;
+import com.iuh.fit.inventory_service.dto.UpdateInventoryRequest;
+
+public interface InventoryService {
+
+    InventoryDTO getInventoryByProductId(Long productId);
+
+    InventoryDTO updateInventory(Long productId, UpdateInventoryRequest request);
+
+    /**
+     * Kiểm tra xem số lượng sản phẩm có đủ không
+     */
+    InventoryCheckResponse checkInventory(InventoryCheckRequest request);
+
+    /**
+     * Kiểm tra danh sách sản phẩm có đủ số lượng không
+     */
+    List<InventoryCheckResponse> checkInventoryBatch(List<InventoryCheckRequest> requests);
+
+    /**
+     * Xử lý khi nhận được thông báo đơn hàng mới
+     */
+    void processOrderCreatedEvent(OrderCreatedEvent event);
+
+    /**
+     * Giảm số lượng tồn kho dựa trên thông tin đơn hàng
+     */
+    boolean reduceInventory(Long productId, Integer quantity, Long orderId, String orderNumber);
+}

@@ -1,0 +1,105 @@
+package com.iuh.fit.inventory_service.controller;
+
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.iuh.fit.inventory_service.dto.ApiResponse;
+import com.iuh.fit.inventory_service.dto.InventoryCheckRequest;
+import com.iuh.fit.inventory_service.dto.InventoryCheckResponse;
+import com.iuh.fit.inventory_service.dto.InventoryDTO;
+import com.iuh.fit.inventory_service.dto.UpdateInventoryRequest;
+import com.iuh.fit.inventory_service.repository.InventoryRepository;
+import com.iuh.fit.inventory_service.service.InventoryService;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@RestController
+@RequestMapping("/api/inventory")
+@RequiredArgsConstructor
+@Slf4j
+public class InventoryController {
+
+        private final InventoryService inventoryService;
+        private final InventoryRepository inventoryRepository;
+
+        @GetMapping("/{productId}")
+        public ResponseEntity<ApiResponse<InventoryDTO>> getInventory(@PathVariable Long productId) {
+                log.info("Nhận yêu cầu lấy thông tin tồn kho cho sản phẩm có ID: {}", productId);
+
+                InventoryDTO inventory = inventoryService.getInventoryByProductId(productId);
+
+                ApiResponse<InventoryDTO> response = new ApiResponse<>(
+                                HttpStatus.OK.value(),
+                                "Lấy thông tin tồn kho thành công",
+                                inventory);
+
+                return ResponseEntity.ok(response);
+        }
+
+        @PutMapping("/{productId}")
+        public ResponseEntity<ApiResponse<InventoryDTO>> updateInventory(
+                        @PathVariable Long productId,
+                        @Valid @RequestBody UpdateInventoryRequest request) {
+
+                log.info("Nhận yêu cầu cập nhật tồn kho cho sản phẩm có ID: {}", productId);
+
+                // Kiểm tra sản phẩm đã tồn tại chưa để xác định thông báo phù hợp
+                boolean isNewProduct = !inventoryRepository.findByProductId(productId).isPresent();
+
+                InventoryDTO updatedInventory = inventoryService.updateInventory(productId, request);
+
+                String message = isNewProduct
+                                ? "Đã tạo mới tồn kho cho sản phẩm thành công"
+                                : "Cập nhật tồn kho thành công";
+
+                ApiResponse<InventoryDTO> response = new ApiResponse<>(
+                                HttpStatus.OK.value(),
+                                message,
+                                updatedInventory);
+
+                return ResponseEntity.ok(response);
+        }
+
+        @PostMapping("/check")
+        public ResponseEntity<ApiResponse<InventoryCheckResponse>> checkInventory(
+                        @Valid @RequestBody InventoryCheckRequest request) {
+
+                log.info("Nhận yêu cầu kiểm tra tồn kho cho sản phẩm có ID: {}", request.getProductId());
+
+                InventoryCheckResponse checkResult = inventoryService.checkInventory(request);
+
+                ApiResponse<InventoryCheckResponse> response = new ApiResponse<>(
+                                HttpStatus.OK.value(),
+                                "Kiểm tra tồn kho thành công",
+                                checkResult);
+
+                return ResponseEntity.ok(response);
+        }
+
+        @PostMapping("/check-batch")
+        public ResponseEntity<ApiResponse<List<InventoryCheckResponse>>> checkInventoryBatch(
+                        @Valid @RequestBody List<InventoryCheckRequest> requests) {
+
+                log.info("Nhận yêu cầu kiểm tra tồn kho hàng loạt cho {} sản phẩm", requests.size());
+
+                List<InventoryCheckResponse> checkResults = inventoryService.checkInventoryBatch(requests);
+
+                ApiResponse<List<InventoryCheckResponse>> response = new ApiResponse<>(
+                                HttpStatus.OK.value(),
+                                "Kiểm tra tồn kho hàng loạt thành công",
+                                checkResults);
+
+                return ResponseEntity.ok(response);
+        }
+}

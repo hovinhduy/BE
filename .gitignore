@@ -1,0 +1,59 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+# Editor-based HTTP Client requests
+/httpRequests/
+# Datasource local storage ignored files
+/dataSources/
+/dataSources.local.xml
+# Bỏ qua thư mục target (thường có trong dự án Maven/Java)
+target/
+
+# Bỏ qua thư mục build
+build/
+
+
+# Bỏ qua các file cấu hình IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+.classpath
+.project
+.settings/
+
+# Bỏ qua các file tạm thời và log
+*.log
+*.tmp
+*.temp
+logs/
+temp/
+
+# Bỏ qua các file được tạo ra trong quá trình chạy
+*.class
+*.jar
+*.war
+*.ear
+
+# Bỏ qua các file cấu hình cá nhân
+application-local.properties
+application-dev.properties
+
+# Bỏ qua các file chứa thông tin nhạy cảm
+.env
+secrets.properties
+api-keys.json
+
+# Bỏ qua các file hệ thống
+.DS_Store
+Thumbs.db
+
+# Bỏ qua thư mục .cursor
+.cursor/
+
+# Bỏ qua tất cả file có đuôi .txt
+*.txt
+
+.vscode/
+
+.idea/
