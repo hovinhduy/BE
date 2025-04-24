@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+@RequestMapping("/api")
 public class ProductController {
     private final ProductService productService;
     private final CategoryService categoryService;
@@ -31,7 +32,7 @@ public class ProductController {
          this.manufactureService = manufactureService;
     }
 
-    @GetMapping("/products")
+    @GetMapping("/product")
     @ApiMessage("Get all products")
     public ResponseEntity<ResultPaginationDTO> getAllProducts(
             @Filter Specification<Product> spec, Pageable pageable
@@ -42,7 +43,7 @@ public class ProductController {
 
     @GetMapping("/product/{id}")
     @ApiMessage("Get product by id")
-    public ResponseEntity<Product> getProductById(@PathVariable("id") long id) throws IdInvalidException {
+    public ResponseEntity<Product> getProductById(@PathVariable("id") String id) throws IdInvalidException {
         Product prouduct = productService.getProductById(id);
         if (prouduct == null) {
             throw new IdInvalidException("Product with id = " + id + " not found");
@@ -83,12 +84,24 @@ public class ProductController {
         if(productService.getProductById(product.getId()) == null) {
             throw new IdInvalidException("Product with id = " + product.getId() + " not found");
         }
-        return ResponseEntity.ok(productService.saveProduct(product));
+        if(product.getManufacture() != null) {
+            String id = product.getManufacture().getId();
+            if(manufactureService.getManufactureById(id) == null) {
+                throw new IdInvalidException("Manufacture with id = " + id + " not found");
+            }
+        }
+        if(product.getCategory() != null) {
+            String id = product.getCategory().getId();
+            if(categoryService.getCategoryById(id) == null) {
+                throw new IdInvalidException("Category with id = " + id + " not found");
+            }
+        }
+        return ResponseEntity.ok(productService.updateProduct(product));
     }
 
     @DeleteMapping("/product/{id}")
     @ApiMessage("Delete product")
-    public ResponseEntity<Void> deleteProduct(@PathVariable("id") Long id) throws IdInvalidException {
+    public ResponseEntity<Void> deleteProduct(@PathVariable("id") String id) throws IdInvalidException {
         if(productService.getProductById(id) == null) {
             throw new IdInvalidException("Product with id = " + id + " not found");
         }

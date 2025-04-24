@@ -11,8 +11,8 @@ import java.util.List;
 @Table(name = "manufacture")
 public class Manufacture {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @Column(name = "name")
     private String name;
@@ -28,11 +28,11 @@ public class Manufacture {
         this.name = name;
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
