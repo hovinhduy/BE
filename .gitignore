@@ -37,8 +37,6 @@ temp/
 
 # Bỏ qua các file cấu hình cá nhân
 application.properties
-application-local.properties
-application-dev.properties
 
 # Bỏ qua các file chứa thông tin nhạy cảm
 .env
