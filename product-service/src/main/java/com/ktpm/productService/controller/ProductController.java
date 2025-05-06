@@ -98,29 +98,64 @@ public class ProductController {
             imageUrl = "https://i.ibb.co/TDvW7DKg/pepe-the-frog-1272162-640.jpg";
         }
         product.setImage(imageUrl);
+        product.setSold(0);
         return ResponseEntity.status(HttpStatus.CREATED).body(productService.saveProduct(product));
     }
 
-    @PutMapping("/product")
+    @PutMapping(value = "/product", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ApiMessage("Update product")
-    public ResponseEntity<Product> updateProduct(@RequestBody Product product) throws IdInvalidException {
-        if(product.getId() == null) {
+    public ResponseEntity<Product> updateProduct(
+            @ModelAttribute("product") ProductDTO productDto,
+            @RequestPart(value = "file", required = false) MultipartFile imageFile
+    ) throws IdInvalidException, IOException {
+        if (productDto.getId() == null) {
             throw new IdInvalidException("Product ID is required");
         }
-        if(productService.getProductById(product.getId()) == null) {
-            throw new IdInvalidException("Product with id = " + product.getId() + " not found");
+        Product product = productService.getProductById(productDto.getId());
+
+        if (product == null) {
+            throw new IdInvalidException("Product with id = " + productDto.getId() + " not found");
         }
-        if(product.getManufacture() != null) {
-            Long id = product.getManufacture().getId();
-            if(manufactureService.getManufactureById(id) == null) {
+
+        product.setId(productDto.getId());
+        product.setName(productDto.getName());
+        product.setPrice(productDto.getPrice());
+        product.setShortDesc(productDto.getShortDesc());
+        product.setDetailDesc(productDto.getDetailDesc());
+        product.setQuantity(productDto.getQuantity());
+        product.setSold(productDto.getSold());
+
+        // Kiểm tra và gán lại Manufacture nếu có
+        if (productDto.getManufactureId() != null) {
+            Long id = productDto.getManufactureId();
+            Manufacture manufacture = manufactureService.getManufactureById(id);
+            if (manufacture == null) {
                 throw new IdInvalidException("Manufacture with id = " + id + " not found");
             }
+            product.setManufacture(manufacture);
+        } else {
+            product.setManufacture(product.getManufacture());
         }
-        if(product.getCategory() != null) {
-            Long id = product.getCategory().getId();
-            if(categoryService.getCategoryById(id) == null) {
+
+        // Kiểm tra và gán lại Category nếu có
+        if (productDto.getCategoryId() != null) {
+            Long id = productDto.getCategoryId();
+            Category category = categoryService.getCategoryById(id);
+            if (category == null) {
                 throw new IdInvalidException("Category with id = " + id + " not found");
             }
+            product.setCategory(category);
+        } else {
+            product.setCategory(product.getCategory());
+        }
+
+        // Xử lý cập nhật hình ảnh
+        if (imageFile != null && !imageFile.isEmpty()) {
+            String imageUrl = uploadService.uploadFile(imageFile);
+            product.setImage(imageUrl);
+        } else {
+            // Giữ nguyên ảnh cũ nếu không upload ảnh mới
+            product.setImage(product.getImage());
         }
         return ResponseEntity.ok(productService.updateProduct(product));
     }

@@ -29,8 +29,8 @@ public class Product {
     @Column(name = "quantity")
     private Integer quantity;
 
-    @Column(name = "soid")
-    private Integer soid;
+    @Column(name = "sold")
+    private Integer sold;
 
     @ManyToOne
     @JoinColumn(name = "category_id")
@@ -43,14 +43,14 @@ public class Product {
     public Product() {
     }
 
-    public Product(String name, Double price, String image, String detailDesc, String shortDesc, Integer quantity, Integer soid, Category category, Manufacture manufacture){
+    public Product(String name, Double price, String image, String detailDesc, String shortDesc, Integer quantity, Integer sold, Category category, Manufacture manufacture){
         this.name = name;
         this.price = price;
         this.image = image;
         this.detailDesc = detailDesc;
         this.shortDesc = shortDesc;
         this.quantity = quantity;
-        this.soid = soid;
+        this.sold = sold;
         this.category = category;
         this.manufacture = manufacture;
     }
@@ -107,12 +107,12 @@ public class Product {
         this.quantity = quantity;
     }
 
-    public Integer getSoid() {
-        return soid;
+    public Integer getSold() {
+        return sold;
     }
 
-    public void setSoid(Integer soid) {
-        this.soid = soid;
+    public void setSold(Integer sold) {
+        this.sold = sold;
     }
 
     public Category getCategory() {

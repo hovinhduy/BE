@@ -4,13 +4,23 @@ import lombok.Data;
 
 @Data
 public class ProductDTO {
+    private Long id;
     private String name;
-    private double price;
+    private Double price;
     private String shortDesc;
     private String detailDesc;
-    private int quantity;
+    private Integer quantity;
     private Long categoryId;
     private Long manufactureId;
+    private Integer sold;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getName() {
         return name;
@@ -20,11 +30,11 @@ public class ProductDTO {
         this.name = name;
     }
 
-    public double getPrice() {
+    public Double getPrice() {
         return price;
     }
 
-    public void setPrice(double price) {
+    public void setPrice(Double price) {
         this.price = price;
     }
 
@@ -44,11 +54,11 @@ public class ProductDTO {
         this.detailDesc = detailDesc;
     }
 
-    public int getQuantity() {
+    public Integer getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(int quantity) {
+    public void setQuantity(Integer quantity) {
         this.quantity = quantity;
     }
 
@@ -66,5 +76,13 @@ public class ProductDTO {
 
     public void setManufactureId(Long manufactureId) {
         this.manufactureId = manufactureId;
+    }
+
+    public Integer getSold() {
+        return sold;
+    }
+
+    public void setSold(Integer sold) {
+        this.sold = sold;
     }
 }

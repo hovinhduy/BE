@@ -54,14 +54,21 @@ public class ProductService {
 
     public Product updateProduct(Product product) {
         Product oldProduct = productRepository.findById(product.getId()).orElse(null);
-        Optional.ofNullable(product.getName()).ifPresent(oldProduct::setName);
-        Optional.ofNullable(product.getPrice()).ifPresent(oldProduct::setPrice);
-        Optional.ofNullable(product.getImage()).ifPresent(oldProduct::setImage);
-        Optional.ofNullable(product.getDetailDesc()).ifPresent(oldProduct::setDetailDesc);
-        Optional.ofNullable(product.getQuantity()).ifPresent(oldProduct::setQuantity);
-        Optional.ofNullable(product.getShortDesc()).ifPresent(oldProduct::setShortDesc);
-        Optional.ofNullable(product.getSoid()).ifPresent(oldProduct::setSoid);
-        if (product.getName() != null) oldProduct.setName(product.getName());
+        if(product.getName() != null){
+            oldProduct.setName(product.getName());
+        }
+        if(product.getQuantity() != null){
+            oldProduct.setQuantity(product.getQuantity());
+        }
+        if(product.getShortDesc() != null){
+            oldProduct.setShortDesc(product.getShortDesc());
+        }
+        if(product.getDetailDesc() != null){
+            oldProduct.setDetailDesc(product.getDetailDesc());
+        }
+        if(product.getSold() != null){
+            oldProduct.setSold(product.getSold());
+        }
         if (product.getCategory() != null){
             oldProduct.setCategory(categoryRepository.findById(product.getCategory().getId()).orElse(null));
         }
