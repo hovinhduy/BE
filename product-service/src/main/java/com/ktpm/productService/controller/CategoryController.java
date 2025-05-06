@@ -39,7 +39,7 @@ public class CategoryController {
 
     @GetMapping("/category/{id}")
     @ApiMessage("Get category by id")
-    public ResponseEntity<Category> getCategoryById(@PathVariable("id") String id) throws IdInvalidException {
+    public ResponseEntity<Category> getCategoryById(@PathVariable("id") Long id) throws IdInvalidException {
         Category category = categoryService.getCategoryById(id);
         if (category == null) {
             throw new IdInvalidException("Product with id = " + id + " not found");
@@ -70,7 +70,7 @@ public class CategoryController {
 
     @DeleteMapping("/category/{id}")
     @ApiMessage("Delete category")
-    public ResponseEntity<Void> deleteCategory(@PathVariable("id") String id) throws IdInvalidException {
+    public ResponseEntity<Void> deleteCategory(@PathVariable("id") Long id) throws IdInvalidException {
         if(categoryService.getCategoryById(id) == null) {
             throw new IdInvalidException("Category with id = " + id + " not found");
         }

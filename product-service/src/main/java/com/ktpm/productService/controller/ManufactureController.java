@@ -34,7 +34,7 @@ public class ManufactureController {
 
     @GetMapping("/manufacture/{id}")
     @ApiMessage("Get manufacture by id")
-    public ResponseEntity<Manufacture> getManufactureById(@PathVariable("id") String id) throws IdInvalidException {
+    public ResponseEntity<Manufacture> getManufactureById(@PathVariable("id") Long id) throws IdInvalidException {
         Manufacture manufacture = manufactureService.getManufactureById(id);
         if (manufacture == null) {
             throw new IdInvalidException("Manufacture with id = " + id + " not found");
@@ -65,7 +65,7 @@ public class ManufactureController {
 
     @DeleteMapping("/manufacture/{id}")
     @ApiMessage("Delete manufacture")
-    public ResponseEntity<Void> deleteManufacture(@PathVariable("id") String id) throws IdInvalidException {
+    public ResponseEntity<Void> deleteManufacture(@PathVariable("id") Long id) throws IdInvalidException {
         if(manufactureService.getManufactureById(id) == null) {
             throw new IdInvalidException("Manufacture with id = " + id + " not found");
         }

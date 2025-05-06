@@ -1,5 +1,6 @@
 package com.ktpm.productService.controller;
 
+import com.ktpm.productService.dto.ProductDTO;
 import com.ktpm.productService.dto.response.RestResponse;
 import com.ktpm.productService.dto.response.ResultPaginationDTO;
 import com.ktpm.productService.model.Category;
@@ -8,15 +9,19 @@ import com.ktpm.productService.model.Product;
 import com.ktpm.productService.service.CategoryService;
 import com.ktpm.productService.service.ManufactureService;
 import com.ktpm.productService.service.ProductService;
+import com.ktpm.productService.service.UploadService;
 import com.ktpm.productService.utils.annotation.ApiMessage;
 import com.ktpm.productService.utils.error.IdInvalidException;
 import com.turkraft.springfilter.boot.Filter;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -25,11 +30,14 @@ public class ProductController {
     private final ProductService productService;
     private final CategoryService categoryService;
     private final ManufactureService manufactureService;
+    private final UploadService uploadService;
 
-    public ProductController(ProductService productService, CategoryService categoryService, ManufactureService manufactureService) {
+    public ProductController(ProductService productService, CategoryService categoryService,
+                             ManufactureService manufactureService, UploadService uploadService) {
          this.productService = productService;
          this.categoryService = categoryService;
          this.manufactureService = manufactureService;
+         this.uploadService = uploadService;
     }
 
     @GetMapping("/product")
@@ -43,7 +51,7 @@ public class ProductController {
 
     @GetMapping("/product/{id}")
     @ApiMessage("Get product by id")
-    public ResponseEntity<Product> getProductById(@PathVariable("id") String id) throws IdInvalidException {
+    public ResponseEntity<Product> getProductById(@PathVariable("id") Long id) throws IdInvalidException {
         Product prouduct = productService.getProductById(id);
         if (prouduct == null) {
             throw new IdInvalidException("Product with id = " + id + " not found");
@@ -51,27 +59,45 @@ public class ProductController {
         return ResponseEntity.ok(productService.getProductById(id));
     }
 
-    @PostMapping("/product")
+    @PostMapping(value = "/product", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ApiMessage("Add new product")
-    public ResponseEntity<Product> addProduct(@RequestBody Product product) throws IdInvalidException {
-        Category category = product.getCategory();
-        if(category == null) {
+    public ResponseEntity<Product> addProduct(
+            @ModelAttribute("product") ProductDTO productDto,
+            @RequestPart(value = "file", required = false) MultipartFile imageFile
+    ) throws IdInvalidException, IOException {
+        Product product = new Product();
+        product.setName(productDto.getName());
+        product.setPrice(productDto.getPrice());
+        product.setShortDesc(productDto.getShortDesc());
+        product.setDetailDesc(productDto.getDetailDesc());
+        product.setQuantity(productDto.getQuantity());
+
+        if(productDto.getCategoryId() == null) {
             throw new IdInvalidException("Category ID is required");
-        }else {
-            if(categoryService.getCategoryById(category.getId()) == null) {
-                throw new IdInvalidException("Category with id = " + category.getId() + " not found");
-            }
-            product.setCategory(categoryService.getCategoryById(category.getId()));
         }
-        Manufacture manufacture = product.getManufacture();
-        if(manufacture == null) {
+
+        Category category = categoryService.getCategoryById(productDto.getCategoryId());
+        if (category == null) {
+            throw new IdInvalidException("Category with id = " + productDto.getCategoryId() + " not found");
+        }
+        product.setCategory(category);
+
+        if (productDto.getManufactureId() == null) {
             throw new IdInvalidException("Manufacture ID is required");
-        }else {
-            if(manufactureService.getManufactureById(manufacture.getId()) == null) {
-                throw new IdInvalidException("Manufacture with id = " + manufacture.getId() + " not found");
-            }
-            product.setManufacture(manufactureService.getManufactureById(manufacture.getId()));
         }
+        Manufacture manufacture = manufactureService.getManufactureById(productDto.getManufactureId());
+        if (manufacture == null) {
+            throw new IdInvalidException("Manufacture with id = " + productDto.getManufactureId() + " not found");
+        }
+        product.setManufacture(manufacture);
+
+        String imageUrl;
+        if (imageFile != null && !imageFile.isEmpty()) {
+            imageUrl = uploadService.uploadFile(imageFile);
+        } else {
+            imageUrl = "https://i.ibb.co/TDvW7DKg/pepe-the-frog-1272162-640.jpg";
+        }
+        product.setImage(imageUrl);
         return ResponseEntity.status(HttpStatus.CREATED).body(productService.saveProduct(product));
     }
 
@@ -85,13 +111,13 @@ public class ProductController {
             throw new IdInvalidException("Product with id = " + product.getId() + " not found");
         }
         if(product.getManufacture() != null) {
-            String id = product.getManufacture().getId();
+            Long id = product.getManufacture().getId();
             if(manufactureService.getManufactureById(id) == null) {
                 throw new IdInvalidException("Manufacture with id = " + id + " not found");
             }
         }
         if(product.getCategory() != null) {
-            String id = product.getCategory().getId();
+            Long id = product.getCategory().getId();
             if(categoryService.getCategoryById(id) == null) {
                 throw new IdInvalidException("Category with id = " + id + " not found");
             }
@@ -101,7 +127,7 @@ public class ProductController {
 
     @DeleteMapping("/product/{id}")
     @ApiMessage("Delete product")
-    public ResponseEntity<Void> deleteProduct(@PathVariable("id") String id) throws IdInvalidException {
+    public ResponseEntity<Void> deleteProduct(@PathVariable("id") Long id) throws IdInvalidException {
         if(productService.getProductById(id) == null) {
             throw new IdInvalidException("Product with id = " + id + " not found");
         }

@@ -8,8 +8,8 @@ import lombok.*;
 @Table(name = "product")
 public class Product {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(name = "name")
     private String name;
@@ -55,7 +55,7 @@ public class Product {
         this.manufacture = manufacture;
     }
 
-    public String getId() {
+    public Long getId() {
         return id;
     }
 

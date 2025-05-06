@@ -44,7 +44,7 @@ public class ProductService {
         return rs;
     }
 
-    public Product getProductById(String id) {
+    public Product getProductById(Long id) {
         return productRepository.findById(id).orElse(null);
     }
 
@@ -72,7 +72,7 @@ public class ProductService {
         return productRepository.save(oldProduct);
     }
 
-    public void deleteProduct(String id) {
+    public void deleteProduct(Long id) {
         productRepository.deleteById(id);
     }
 }

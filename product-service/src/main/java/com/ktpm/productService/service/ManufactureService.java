@@ -22,7 +22,7 @@ public class ManufactureService {
         return manufactureRepository.findAll();
     }
 
-    public Manufacture getManufactureById(String id) {
+    public Manufacture getManufactureById(Long id) {
         return manufactureRepository.findById(id).orElse(null);
     }
 
@@ -30,7 +30,7 @@ public class ManufactureService {
         return manufactureRepository.save(manufacture);
     }
 
-    public void deleteManufacture(String id) {
+    public void deleteManufacture(Long id) {
         Manufacture manufacture = manufactureRepository.findById(id).orElse(null);
         List<Product> product = productRepository.findByManufacture(manufacture);
         productRepository.deleteAll(product);

@@ -22,7 +22,7 @@ public class CategoryService {
         return categoryRepository.findAll();
     }
 
-    public Category getCategoryById(String id) {
+    public Category getCategoryById(Long id) {
         return categoryRepository.findById(id).orElse(null);
     }
 
@@ -30,7 +30,7 @@ public class CategoryService {
         return categoryRepository.save(category);
     }
 
-    public void deleteCategory(String id) {
+    public void deleteCategory(Long id) {
         Category category = categoryRepository.findById(id).orElse(null);
         List<Product> product = productRepository.findByCategory(category);
         productRepository.deleteAll(product);
