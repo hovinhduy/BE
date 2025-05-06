@@ -36,6 +36,7 @@ temp/
 *.ear
 
 # Bỏ qua các file cấu hình cá nhân
+application.properties
 application-local.properties
 application-dev.properties
 
