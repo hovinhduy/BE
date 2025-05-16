@@ -1,58 +1,45 @@
 package com.ktpm.paymentService.service;
 
-import com.google.gson.JsonObject;
-import com.ktpm.paymentService.model.OrderEventDTO;
-import okhttp3.*;
-import org.springframework.beans.factory.annotation.Value;
+import com.ktpm.paymentService.dto.PaymentRequest;
+import com.ktpm.paymentService.model.Payment;
+import com.ktpm.paymentService.model.PaymentStatus;
+import com.ktpm.paymentService.repository.PaymentRepository;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
+import java.time.LocalDateTime;
 
 @Service
 public class PaymentService {
+    private final PaymentRepository paymentRepository;
+    private final PayOSClient payOSClient;
 
-    @Value("${payos.client-id}")
-    private String clientId;
+    public PaymentService(PaymentRepository paymentRepository, PayOSClient payOSClient) {
+        this.paymentRepository = paymentRepository;
+        this.payOSClient = payOSClient;
+    }
 
-    @Value("${payos.api-key}")
-    private String apiKey;
+    public String createPaymentAndGetUrl(PaymentRequest request) {
+        Payment payment = new Payment();
+        payment.setOrderId(request.getOrderId());
+        payment.setAmount(request.getAmount());
+        payment.setStatus(PaymentStatus.PENDING);
+        payment.setCreatedAt(LocalDateTime.now());
 
-    @Value("${payos.checksum-key}")
-    private String checksumKey;
+        paymentRepository.save(payment);
 
-    private final OkHttpClient client = new OkHttpClient();
+        return payOSClient.createPaymentUrl(request.getOrderId(), request.getAmount());
+    }
 
-    public void processPayment(OrderEventDTO order) {
-        String callbackUrl = "http://localhost:8085/api/payments/callback"; // tùy biến
-        String returnUrl = "http://localhost:3000/payment-success"; // front-end sẽ redirect đến đây sau khi thanh toán
+    public Payment updateStatus(Long orderId, String status) {
+        Payment payment = paymentRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new RuntimeException("Payment not found"));
 
-        JsonObject payload = new JsonObject();
-        payload.addProperty("orderCode", order.getId());
-        payload.addProperty("amount", order.getTotalAmount().longValue()); // đơn vị: VND
-        payload.addProperty("description", "Thanh toán đơn hàng #" + order.getId());
-        payload.addProperty("returnUrl", returnUrl);
-        payload.addProperty("cancelUrl", returnUrl); // fallback
-        payload.addProperty("signature", checksumKey); // tùy theo PayOS yêu cầu checksum
-
-        RequestBody body = RequestBody.create(payload.toString(), MediaType.parse("application/json"));
-
-        Request request = new Request.Builder()
-                .url("https://api.payos.vn/v1/payment-requests")
-                .post(body)
-                .addHeader("x-client-id", clientId)
-                .addHeader("x-api-key", apiKey)
-                .build();
-
-        try (Response response = client.newCall(request).execute()) {
-            if (response.isSuccessful()) {
-                String resBody = response.body().string();
-                System.out.println("✅ Created payment link: " + resBody);
-                // Extract paymentUrl and notify customer via socket/email/...
-            } else {
-                System.out.println("❌ Payment failed: " + response.code());
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (status.equals("SUCCESS")) {
+            payment.setStatus(PaymentStatus.SUCCESS);
+        } else {
+            payment.setStatus(PaymentStatus.FAILED);
         }
+
+        return paymentRepository.save(payment);
     }
 }

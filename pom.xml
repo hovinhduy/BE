@@ -16,6 +16,7 @@
         <module>product-service</module>
         <module>inventory-service</module>
         <module>payment-service</module>
+        <module>ai-chat-service</module>
     </modules>
 
     <properties>
