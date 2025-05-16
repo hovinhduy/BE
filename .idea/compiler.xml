@@ -30,14 +30,14 @@
         <module name="order-service" />
         <module name="inventory-service" />
       </profile>
-      <profile name="Annotation profile for microservices-project (2) (com.ktpm)" enabled="true">
+      <profile name="Annotation profile for ai-chat-service" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
-          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.36/lombok-1.18.36.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.38/lombok-1.18.38.jar" />
         </processorPath>
-        <module name="microservices-project (2) (com.ktpm)" />
+        <module name="ai-chat-service" />
       </profile>
       <profile name="Annotation profile for payment-service" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
@@ -48,14 +48,14 @@
         </processorPath>
         <module name="payment-service" />
       </profile>
-      <profile name="Annotation profile for ai-chat-service" enabled="true">
+      <profile name="Annotation profile for microservices-project (2) (com.ktpm)" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
-          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.38/lombok-1.18.38.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.36/lombok-1.18.36.jar" />
         </processorPath>
-        <module name="ai-chat-service" />
+        <module name="microservices-project (2) (com.ktpm)" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
