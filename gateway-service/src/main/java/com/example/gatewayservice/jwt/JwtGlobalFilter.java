@@ -17,6 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.Base64;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
 import java.util.Collections;
 
 @Component
@@ -31,7 +33,8 @@ public class JwtGlobalFilter implements GlobalFilter {
     // Những đường dẫn nào không cần check token
     private static final String[] WHITELIST = {
             "/auth/login",
-            "/auth/register"
+            "/auth/register",
+            "/api/product"
     };
 
     @Override
@@ -78,10 +81,24 @@ public class JwtGlobalFilter implements GlobalFilter {
             String username = claims.getSubject();
 
             @SuppressWarnings("unchecked")
-            List<String> rolesClaim = claims.get("roles", List.class);
-            String roles = ""; // Giá trị mặc định nếu rolesClaim là null hoặc rỗng
-            if (rolesClaim != null && !rolesClaim.isEmpty()) {
-                roles = String.join(",", rolesClaim);
+            List<Object> rolesClaimRaw = claims.get("roles", List.class);
+            String roles = "";
+            if (rolesClaimRaw != null && !rolesClaimRaw.isEmpty()) {
+                List<String> actualRoles = new ArrayList<>();
+                for (Object roleObj : rolesClaimRaw) {
+                    if (roleObj instanceof Map) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, String> roleMap = (Map<String, String>) roleObj;
+                        if (roleMap.containsKey("authority")) {
+                            actualRoles.add(roleMap.get("authority"));
+                        }
+                    }
+                }
+                if (!actualRoles.isEmpty()) {
+                    roles = String.join(",", actualRoles);
+                } else {
+                    logger.warn("No 'authority' found in roles claim for user: {}", username);
+                }
             } else {
                 logger.warn("Roles claim is missing or empty in JWT for user: {}", username);
             }

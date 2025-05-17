@@ -56,3 +56,9 @@ Thumbs.db
 .vscode/
 
 .idea/
+
+target/
+
+# Bỏ qua các file class
+*.class
+

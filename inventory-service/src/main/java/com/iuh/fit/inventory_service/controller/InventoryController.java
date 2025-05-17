@@ -9,8 +9,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.iuh.fit.inventory_service.dto.ApiResponse;
 import com.iuh.fit.inventory_service.dto.InventoryCheckRequest;
@@ -33,6 +35,8 @@ public class InventoryController {
         private final InventoryService inventoryService;
         private final InventoryRepository inventoryRepository;
 
+        private static final String ADMIN_ROLE = "ADMIN";
+
         @GetMapping("/{productId}")
         public ResponseEntity<ApiResponse<InventoryDTO>> getInventory(@PathVariable Long productId) {
                 log.info("Nhận yêu cầu lấy thông tin tồn kho cho sản phẩm có ID: {}", productId);
@@ -50,9 +54,17 @@ public class InventoryController {
         @PutMapping("/{productId}")
         public ResponseEntity<ApiResponse<InventoryDTO>> updateInventory(
                         @PathVariable Long productId,
-                        @Valid @RequestBody UpdateInventoryRequest request) {
+                        @Valid @RequestBody UpdateInventoryRequest request,
+                        @RequestHeader(value = "X-ROLES", required = false) String roles) {
 
-                log.info("Nhận yêu cầu cập nhật tồn kho cho sản phẩm có ID: {}", productId);
+                log.info("Nhận yêu cầu cập nhật tồn kho cho sản phẩm có ID: {}, bởi người dùng có vai trò: {}",
+                                productId, roles);
+
+                if (roles == null || !roles.contains(ADMIN_ROLE)) {
+                        log.warn("Người dùng không có quyền ADMIN để cập nhật tồn kho cho sản phẩm ID: {}. Vai trò hiện tại: {}",
+                                        productId, roles);
+                        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Không có quyền truy cập");
+                }
 
                 // Kiểm tra sản phẩm đã tồn tại chưa để xác định thông báo phù hợp
                 boolean isNewProduct = !inventoryRepository.findByProductId(productId).isPresent();

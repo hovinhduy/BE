@@ -25,6 +25,6 @@ public class CartItemDTO {
     private BigDecimal price;
     
     // Các trường bổ sung cho hiển thị
-    private String productName;
-    private String productImage;
+//    private String productName;
+//    private String productImage;
 } 
