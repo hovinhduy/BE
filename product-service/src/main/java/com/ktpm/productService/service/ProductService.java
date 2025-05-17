@@ -1,5 +1,6 @@
 package com.ktpm.productService.service;
 
+import com.ktpm.productService.dto.event.ProductCreatedEvent;
 import com.ktpm.productService.dto.response.ResultPaginationDTO;
 import com.ktpm.productService.model.Category;
 import com.ktpm.productService.model.Product;
@@ -19,11 +20,14 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final ManufactureRepository manufactureRepository;
     private final CategoryRepository categoryRepository;
+    private final KafkaProducerService kafkaProducerService;
 
-    public ProductService(ProductRepository productRepository, ManufactureRepository manufactureRepository, CategoryRepository categoryRepository) {
+    public ProductService(ProductRepository productRepository, ManufactureRepository manufactureRepository,
+            CategoryRepository categoryRepository, KafkaProducerService kafkaProducerService) {
         this.productRepository = productRepository;
         this.manufactureRepository = manufactureRepository;
         this.categoryRepository = categoryRepository;
+        this.kafkaProducerService = kafkaProducerService;
     }
 
     public ResultPaginationDTO getAllProducts(Specification<Product> jobSpecification, Pageable pageable) {
@@ -49,31 +53,42 @@ public class ProductService {
     }
 
     public Product saveProduct(Product product) {
-        return productRepository.save(product);
+        Product savedProduct = productRepository.save(product);
+
+        // Gửi sự kiện Kafka khi tạo sản phẩm mới
+        ProductCreatedEvent event = new ProductCreatedEvent(
+                savedProduct.getId(),
+                savedProduct.getName(),
+                savedProduct.getQuantity(),
+                savedProduct.getPrice());
+
+        kafkaProducerService.sendProductCreatedEvent(event);
+
+        return savedProduct;
     }
 
     public Product updateProduct(Product product) {
         Product oldProduct = productRepository.findById(product.getId()).orElse(null);
-        if(product.getName() != null){
+        if (product.getName() != null) {
             oldProduct.setName(product.getName());
         }
-        if(product.getQuantity() != null){
+        if (product.getQuantity() != null) {
             oldProduct.setQuantity(product.getQuantity());
         }
-        if(product.getShortDesc() != null){
+        if (product.getShortDesc() != null) {
             oldProduct.setShortDesc(product.getShortDesc());
         }
-        if(product.getDetailDesc() != null){
+        if (product.getDetailDesc() != null) {
             oldProduct.setDetailDesc(product.getDetailDesc());
         }
-        if(product.getSold() != null){
+        if (product.getSold() != null) {
             oldProduct.setSold(product.getSold());
         }
-        if (product.getCategory() != null){
+        if (product.getCategory() != null) {
             oldProduct.setCategory(categoryRepository.findById(product.getCategory().getId()).orElse(null));
         }
 
-        if (product.getManufacture() != null){
+        if (product.getManufacture() != null) {
             oldProduct.setManufacture(manufactureRepository.findById(product.getManufacture().getId()).orElse(null));
         }
         return productRepository.save(oldProduct);

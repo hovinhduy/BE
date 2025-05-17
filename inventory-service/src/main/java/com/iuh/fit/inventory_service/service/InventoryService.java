@@ -7,6 +7,7 @@ import com.iuh.fit.inventory_service.dto.InventoryCheckResponse;
 import com.iuh.fit.inventory_service.dto.InventoryDTO;
 import com.iuh.fit.inventory_service.dto.OrderCreatedEvent;
 import com.iuh.fit.inventory_service.dto.UpdateInventoryRequest;
+import com.iuh.fit.inventory_service.event.ProductCreatedEvent;
 
 public interface InventoryService {
 
@@ -28,6 +29,11 @@ public interface InventoryService {
      * Xử lý khi nhận được thông báo đơn hàng mới
      */
     void processOrderCreatedEvent(OrderCreatedEvent event);
+
+    /**
+     * Xử lý khi nhận được thông báo sản phẩm mới được tạo
+     */
+    void processProductCreatedEvent(ProductCreatedEvent event);
 
     /**
      * Giảm số lượng tồn kho dựa trên thông tin đơn hàng
