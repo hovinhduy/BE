@@ -63,3 +63,8 @@ target/
 *.class
 
 *.yml
+
+.idea/
+
+
+*.html
