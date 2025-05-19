@@ -38,6 +38,10 @@ public class JwtService {
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
+        if (userDetails instanceof com.example.userservice.model.User) {
+            com.example.userservice.model.User user = (com.example.userservice.model.User) userDetails;
+            extraClaims.put("userId", user.getId());
+        }
         return Jwts.builder()
                 .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername())
