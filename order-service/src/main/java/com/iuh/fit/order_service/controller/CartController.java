@@ -9,13 +9,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.iuh.fit.order_service.dto.AddCartItemRequest;
 import com.iuh.fit.order_service.dto.ApiResponse;
 import com.iuh.fit.order_service.dto.CartDTO;
 import com.iuh.fit.order_service.dto.UpdateCartItemRequest;
+import com.iuh.fit.order_service.security.SecurityUtils;
 import com.iuh.fit.order_service.service.CartService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,10 +32,12 @@ import lombok.extern.slf4j.Slf4j;
 public class CartController {
     
     private final CartService cartService;
+    private final SecurityUtils securityUtils;
     
     @GetMapping
     @Operation(summary = "Lấy thông tin giỏ hàng của người dùng")
-    public ResponseEntity<ApiResponse<CartDTO>> getCart(@RequestParam Long userId) {
+    public ResponseEntity<ApiResponse<CartDTO>> getCart() {
+        Long userId = securityUtils.getCurrentUserId();
         log.info("Lấy thông tin giỏ hàng của người dùng: {}", userId);
         CartDTO cart = cartService.getCartByUserId(userId);
         return ResponseEntity.ok(ApiResponse.success("Lấy giỏ hàng thành công", cart));
@@ -44,7 +46,12 @@ public class CartController {
     @PostMapping("/items")
     @Operation(summary = "Thêm sản phẩm vào giỏ hàng")
     public ResponseEntity<ApiResponse<CartDTO>> addItemToCart(@Valid @RequestBody AddCartItemRequest request) {
-        log.info("Thêm sản phẩm {} vào giỏ hàng của người dùng {}", request.getProductId(), request.getUserId());
+        Long userId = securityUtils.getCurrentUserId();
+        
+        // Gán userId từ token vào request
+        request.setUserId(userId);
+        
+        log.info("Thêm sản phẩm {} vào giỏ hàng của người dùng {}", request.getProductId(), userId);
         CartDTO cart = cartService.addItemToCart(request);
         return new ResponseEntity<>(ApiResponse.success("Thêm sản phẩm vào giỏ hàng thành công", cart), HttpStatus.CREATED);
     }
@@ -54,6 +61,11 @@ public class CartController {
     public ResponseEntity<ApiResponse<CartDTO>> updateCartItem(
             @PathVariable Long id,
             @Valid @RequestBody UpdateCartItemRequest request) {
+        Long userId = securityUtils.getCurrentUserId();
+        
+        // Gán userId từ token vào request
+        request.setUserId(userId);
+        
         log.info("Cập nhật số lượng sản phẩm trong giỏ hàng: {}", id);
         CartDTO cart = cartService.updateCartItem(id, request);
         return ResponseEntity.ok(ApiResponse.success("Cập nhật giỏ hàng thành công", cart));
@@ -61,9 +73,9 @@ public class CartController {
     
     @DeleteMapping("/items/{id}")
     @Operation(summary = "Xóa sản phẩm khỏi giỏ hàng")
-    public ResponseEntity<ApiResponse<Void>> removeCartItem(
-            @PathVariable Long id,
-            @RequestParam Long userId) {
+    public ResponseEntity<ApiResponse<Void>> removeCartItem(@PathVariable Long id) {
+        Long userId = securityUtils.getCurrentUserId();
+        
         log.info("Xóa sản phẩm {} khỏi giỏ hàng của người dùng {}", id, userId);
         cartService.removeCartItem(id, userId);
         return ResponseEntity.ok(ApiResponse.success("Xóa sản phẩm khỏi giỏ hàng thành công", null));
@@ -71,7 +83,9 @@ public class CartController {
     
     @DeleteMapping
     @Operation(summary = "Xóa toàn bộ giỏ hàng")
-    public ResponseEntity<ApiResponse<Void>> clearCart(@RequestParam Long userId) {
+    public ResponseEntity<ApiResponse<Void>> clearCart() {
+        Long userId = securityUtils.getCurrentUserId();
+        
         log.info("Xóa toàn bộ giỏ hàng của người dùng: {}", userId);
         cartService.clearCart(userId);
         return ResponseEntity.ok(ApiResponse.success("Xóa giỏ hàng thành công", null));

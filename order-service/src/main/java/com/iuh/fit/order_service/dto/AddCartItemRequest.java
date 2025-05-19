@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AddCartItemRequest {
     
-    @NotNull(message = "ID người dùng không được để trống")
+//    @NotNull(message = "ID người dùng không được để trống")
     private Long userId;
     
     @NotNull(message = "ID sản phẩm không được để trống")
@@ -25,7 +25,7 @@ public class AddCartItemRequest {
     @NotNull(message = "Giá sản phẩm không được để trống")
     private BigDecimal price;
     
-    private String productName;
-    
-    private String productImage;
+//    private String productName;
+//
+//    private String productImage;
 } 

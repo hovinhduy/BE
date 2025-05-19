@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CreateOrderRequest {
     
-    @NotNull(message = "ID người dùng không được để trống")
+//    @NotNull(message = "ID người dùng không được để trống")
     private Long userId;
     
     @NotNull(message = "ID địa chỉ giao hàng không được để trống")

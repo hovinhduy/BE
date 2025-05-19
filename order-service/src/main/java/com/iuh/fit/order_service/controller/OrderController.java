@@ -22,6 +22,7 @@ import com.iuh.fit.order_service.dto.CreateOrderRequest;
 import com.iuh.fit.order_service.dto.OrderDTO;
 import com.iuh.fit.order_service.dto.OrderHistoryDTO;
 import com.iuh.fit.order_service.entity.OrderStatus;
+import com.iuh.fit.order_service.security.SecurityUtils;
 import com.iuh.fit.order_service.service.OrderService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,11 +39,17 @@ import lombok.extern.slf4j.Slf4j;
 public class OrderController {
     
     private final OrderService orderService;
+    private final SecurityUtils securityUtils;
     
     @PostMapping
     @Operation(summary = "Tạo đơn hàng mới từ giỏ hàng hiện tại")
     public ResponseEntity<ApiResponse<OrderDTO>> createOrder(@Valid @RequestBody CreateOrderRequest request) {
-        log.info("Tạo đơn hàng mới cho người dùng: {}", request.getUserId());
+        Long userId = securityUtils.getCurrentUserId();
+        
+        // Gán userId từ token vào request
+        request.setUserId(userId);
+        
+        log.info("Tạo đơn hàng mới cho người dùng: {}", userId);
         OrderDTO order = orderService.createOrder(request);
         return new ResponseEntity<>(ApiResponse.success("Tạo đơn hàng thành công", order), HttpStatus.CREATED);
     }
@@ -50,11 +57,12 @@ public class OrderController {
     @GetMapping
     @Operation(summary = "Lấy danh sách đơn hàng của người dùng")
     public ResponseEntity<ApiResponse<Page<OrderDTO>>> getOrdersByUser(
-            @RequestParam Long userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "DESC") String sortDir) {
+        
+        Long userId = securityUtils.getCurrentUserId();
         
         Sort sort = sortDir.equalsIgnoreCase("ASC") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
@@ -68,8 +76,12 @@ public class OrderController {
     @GetMapping("/{id}")
     @Operation(summary = "Lấy chi tiết đơn hàng theo ID")
     public ResponseEntity<ApiResponse<OrderDTO>> getOrderById(@PathVariable Long id) {
-        log.info("Lấy chi tiết đơn hàng: {}", id);
         OrderDTO order = orderService.getOrderById(id);
+        
+        // Kiểm tra đơn hàng có thuộc về người dùng hiện tại không
+        securityUtils.requireOwnerOrAdmin(order.getUserId());
+        
+        log.info("Lấy chi tiết đơn hàng: {}", id);
         return ResponseEntity.ok(ApiResponse.success("Lấy chi tiết đơn hàng thành công", order));
     }
     
@@ -77,12 +89,19 @@ public class OrderController {
     @Operation(summary = "Hủy đơn hàng")
     public ResponseEntity<ApiResponse<OrderDTO>> cancelOrder(
             @PathVariable Long id,
-            @RequestParam String reason,
-            @RequestParam(defaultValue = "SYSTEM") String cancelledBy) {
+            @RequestParam String reason) {
+        
+        Long userId = securityUtils.getCurrentUserId();
+        
+        // Kiểm tra đơn hàng có thuộc về người dùng hiện tại không
+        OrderDTO order = orderService.getOrderById(id);
+        securityUtils.requireOwnerOrAdmin(order.getUserId());
+        
+        String cancelledBy = securityUtils.hasRole("ROLE_ADMIN") ? "ADMIN" : "USER_" + userId;
         
         log.info("Hủy đơn hàng: {}", id);
-        OrderDTO order = orderService.cancelOrder(id, reason, cancelledBy);
-        return ResponseEntity.ok(ApiResponse.success("Hủy đơn hàng thành công", order));
+        OrderDTO cancelledOrder = orderService.cancelOrder(id, reason, cancelledBy);
+        return ResponseEntity.ok(ApiResponse.success("Hủy đơn hàng thành công", cancelledOrder));
     }
     
     @PostMapping("/{id}/pay")
@@ -91,26 +110,38 @@ public class OrderController {
             @PathVariable Long id,
             @RequestParam String paymentDetails) {
         
+        // Kiểm tra đơn hàng có thuộc về người dùng hiện tại không
+        OrderDTO order = orderService.getOrderById(id);
+        securityUtils.requireOwnerOrAdmin(order.getUserId());
+        
         log.info("Xác nhận thanh toán đơn hàng: {}", id);
-        OrderDTO order = orderService.processPayment(id, paymentDetails);
-        return ResponseEntity.ok(ApiResponse.success("Xác nhận thanh toán thành công", order));
+        OrderDTO updatedOrder = orderService.processPayment(id, paymentDetails);
+        return ResponseEntity.ok(ApiResponse.success("Xác nhận thanh toán thành công", updatedOrder));
     }
     
     @PostMapping("/{id}/refund")
     @Operation(summary = "Yêu cầu hoàn tiền đơn hàng")
     public ResponseEntity<ApiResponse<OrderDTO>> processRefund(
             @PathVariable Long id,
-            @RequestParam String refundDetails,
-            @RequestParam(defaultValue = "SYSTEM") String refundedBy) {
+            @RequestParam String refundDetails) {
+        
+        Long userId = securityUtils.getCurrentUserId();
+        
+        // Chỉ admin mới có quyền hoàn tiền
+        securityUtils.requireAdmin();
         
         log.info("Xử lý hoàn tiền đơn hàng: {}", id);
-        OrderDTO order = orderService.processRefund(id, refundDetails, refundedBy);
+        OrderDTO order = orderService.processRefund(id, refundDetails, "ADMIN_" + userId);
         return ResponseEntity.ok(ApiResponse.success("Xử lý hoàn tiền thành công", order));
     }
     
     @GetMapping("/{id}/history")
     @Operation(summary = "Lấy lịch sử đơn hàng")
     public ResponseEntity<ApiResponse<List<OrderHistoryDTO>>> getOrderHistory(@PathVariable Long id) {
+        // Kiểm tra đơn hàng có thuộc về người dùng hiện tại không
+        OrderDTO order = orderService.getOrderById(id);
+        securityUtils.requireOwnerOrAdmin(order.getUserId());
+        
         log.info("Lấy lịch sử đơn hàng: {}", id);
         List<OrderHistoryDTO> history = orderService.getOrderHistory(id);
         return ResponseEntity.ok(ApiResponse.success("Lấy lịch sử đơn hàng thành công", history));
@@ -118,9 +149,8 @@ public class OrderController {
     
     @GetMapping("/status")
     @Operation(summary = "Lấy danh sách đơn hàng theo trạng thái")
-    public ResponseEntity<ApiResponse<List<OrderDTO>>> getOrdersByStatus(
-            @RequestParam Long userId,
-            @RequestParam OrderStatus status) {
+    public ResponseEntity<ApiResponse<List<OrderDTO>>> getOrdersByStatus(@RequestParam OrderStatus status) {
+        Long userId = securityUtils.getCurrentUserId();
         
         log.info("Lấy danh sách đơn hàng của người dùng {} theo trạng thái: {}", userId, status);
         List<OrderDTO> orders = orderService.getOrdersByUserIdAndStatus(userId, status);

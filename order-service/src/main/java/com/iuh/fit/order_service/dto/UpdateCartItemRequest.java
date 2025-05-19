@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UpdateCartItemRequest {
     
-    @NotNull(message = "ID người dùng không được để trống")
+//    @NotNull(message = "ID người dùng không được để trống")
     private Long userId;
     
     @Min(value = 1, message = "Số lượng phải lớn hơn 0")
