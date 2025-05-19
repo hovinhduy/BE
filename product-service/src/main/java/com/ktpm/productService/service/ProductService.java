@@ -14,6 +14,13 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.Map;
+
+import com.ktpm.productService.client.InventoryServiceClient;
+import com.ktpm.productService.dto.client.ApiResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class ProductService {
@@ -21,17 +28,50 @@ public class ProductService {
     private final ManufactureRepository manufactureRepository;
     private final CategoryRepository categoryRepository;
     private final KafkaProducerService kafkaProducerService;
+    private final InventoryServiceClient inventoryServiceClient;
+    private static final Logger log = LoggerFactory.getLogger(ProductService.class);
 
     public ProductService(ProductRepository productRepository, ManufactureRepository manufactureRepository,
-            CategoryRepository categoryRepository, KafkaProducerService kafkaProducerService) {
+            CategoryRepository categoryRepository, KafkaProducerService kafkaProducerService,
+            InventoryServiceClient inventoryServiceClient) {
         this.productRepository = productRepository;
         this.manufactureRepository = manufactureRepository;
         this.categoryRepository = categoryRepository;
         this.kafkaProducerService = kafkaProducerService;
+        this.inventoryServiceClient = inventoryServiceClient;
     }
 
     public ResultPaginationDTO getAllProducts(Specification<Product> jobSpecification, Pageable pageable) {
         Page<Product> pageProduct = productRepository.findAll(jobSpecification, pageable);
+        List<Product> products = pageProduct.getContent();
+
+        if (products != null && !products.isEmpty()) {
+            List<Long> productIds = products.stream().map(Product::getId).collect(Collectors.toList());
+            try {
+                ApiResponse<List<com.ktpm.productService.dto.client.InventoryDTO>> inventoryResponse = inventoryServiceClient
+                        .getInventoriesByProductIds(productIds);
+
+                if (inventoryResponse != null && inventoryResponse.getData() != null) {
+                    Map<Long, Integer> inventoryMap = inventoryResponse.getData().stream()
+                            .collect(Collectors.toMap(com.ktpm.productService.dto.client.InventoryDTO::getProductId,
+                                    com.ktpm.productService.dto.client.InventoryDTO::getQuantity,
+                                    (oldValue, newValue) -> newValue));
+
+                    products.forEach(product -> {
+                        product.setQuantity(inventoryMap.getOrDefault(product.getId(), 0));
+                    });
+                } else {
+                    log.warn(
+                            "Không nhận được dữ liệu tồn kho từ inventory-service hoặc dữ liệu rỗng cho productIds: {}. Đặt số lượng về 0.",
+                            productIds);
+                    products.forEach(product -> product.setQuantity(0));
+                }
+            } catch (Exception e) {
+                log.error("Lỗi khi gọi inventory-service để lấy số lượng cho productIds: {}: {}. Đặt số lượng về 0.",
+                        productIds, e.getMessage(), e);
+                products.forEach(product -> product.setQuantity(0));
+            }
+        }
 
         ResultPaginationDTO rs = new ResultPaginationDTO();
         ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
@@ -43,7 +83,7 @@ public class ProductService {
         meta.setTotal(pageProduct.getTotalElements());
 
         rs.setMeta(meta);
-        rs.setResult(pageProduct.getContent());
+        rs.setResult(products);
 
         return rs;
     }

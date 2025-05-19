@@ -33,19 +33,17 @@ public class ProductController {
     private final UploadService uploadService;
 
     public ProductController(ProductService productService, CategoryService categoryService,
-                             ManufactureService manufactureService, UploadService uploadService) {
-         this.productService = productService;
-         this.categoryService = categoryService;
-         this.manufactureService = manufactureService;
-         this.uploadService = uploadService;
+            ManufactureService manufactureService, UploadService uploadService) {
+        this.productService = productService;
+        this.categoryService = categoryService;
+        this.manufactureService = manufactureService;
+        this.uploadService = uploadService;
     }
 
     @GetMapping("/product")
     @ApiMessage("Get all products")
     public ResponseEntity<ResultPaginationDTO> getAllProducts(
-            @Filter Specification<Product> spec, Pageable pageable
-    ) {
-        ResponseEntity<ResultPaginationDTO> a = ResponseEntity.status(HttpStatus.OK).body(productService.getAllProducts(spec, pageable));
+            @Filter Specification<Product> spec, Pageable pageable) {
         return ResponseEntity.status(HttpStatus.OK).body(productService.getAllProducts(spec, pageable));
     }
 
@@ -63,8 +61,8 @@ public class ProductController {
     @ApiMessage("Add new product")
     public ResponseEntity<Product> addProduct(
             @ModelAttribute("product") ProductDTO productDto,
-            @RequestPart(value = "file", required = false) MultipartFile imageFile
-    ) throws IdInvalidException, IOException {
+            @RequestPart(value = "file", required = false) MultipartFile imageFile)
+            throws IdInvalidException, IOException {
         Product product = new Product();
         product.setName(productDto.getName());
         product.setPrice(productDto.getPrice());
@@ -72,7 +70,7 @@ public class ProductController {
         product.setDetailDesc(productDto.getDetailDesc());
         product.setQuantity(productDto.getQuantity());
 
-        if(productDto.getCategoryId() == null) {
+        if (productDto.getCategoryId() == null) {
             throw new IdInvalidException("Category ID is required");
         }
 
@@ -106,8 +104,8 @@ public class ProductController {
     @ApiMessage("Update product")
     public ResponseEntity<Product> updateProduct(
             @ModelAttribute("product") ProductDTO productDto,
-            @RequestPart(value = "file", required = false) MultipartFile imageFile
-    ) throws IdInvalidException, IOException {
+            @RequestPart(value = "file", required = false) MultipartFile imageFile)
+            throws IdInvalidException, IOException {
         if (productDto.getId() == null) {
             throw new IdInvalidException("Product ID is required");
         }
@@ -163,7 +161,7 @@ public class ProductController {
     @DeleteMapping("/product/{id}")
     @ApiMessage("Delete product")
     public ResponseEntity<Void> deleteProduct(@PathVariable("id") Long id) throws IdInvalidException {
-        if(productService.getProductById(id) == null) {
+        if (productService.getProductById(id) == null) {
             throw new IdInvalidException("Product with id = " + id + " not found");
         }
         productService.deleteProduct(id);

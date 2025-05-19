@@ -26,6 +26,11 @@ public interface InventoryService {
     List<InventoryCheckResponse> checkInventoryBatch(List<InventoryCheckRequest> requests);
 
     /**
+     * Lấy danh sách tồn kho theo danh sách ID sản phẩm.
+     */
+    List<InventoryDTO> getInventoriesByProductIds(List<Long> productIds);
+
+    /**
      * Xử lý khi nhận được thông báo đơn hàng mới
      */
     void processOrderCreatedEvent(OrderCreatedEvent event);

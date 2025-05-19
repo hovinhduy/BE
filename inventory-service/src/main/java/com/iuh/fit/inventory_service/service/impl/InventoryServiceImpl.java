@@ -266,6 +266,13 @@ public class InventoryServiceImpl implements InventoryService {
                 log.info("Đã tạo inventory mới cho sản phẩm ID: {}", event.getId());
         }
 
+        @Override
+        public List<InventoryDTO> getInventoriesByProductIds(List<Long> productIds) {
+                log.info("Lấy thông tin tồn kho cho danh sách productIds: {}", productIds);
+                List<Inventory> inventories = inventoryRepository.findAllByProductIdIn(productIds);
+                return inventories.stream().map(this::mapToDTO).collect(Collectors.toList());
+        }
+
         private InventoryDTO mapToDTO(Inventory inventory) {
                 return InventoryDTO.builder()
                                 .productId(inventory.getProductId())

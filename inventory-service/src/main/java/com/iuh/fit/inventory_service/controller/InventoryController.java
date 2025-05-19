@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -112,6 +113,18 @@ public class InventoryController {
                                 "Kiểm tra tồn kho hàng loạt thành công",
                                 checkResults);
 
+                return ResponseEntity.ok(response);
+        }
+
+        @GetMapping("/batch")
+        public ResponseEntity<ApiResponse<List<InventoryDTO>>> getInventoriesByProductIds(
+                        @RequestParam("productIds") List<Long> productIds) {
+                log.info("Nhận yêu cầu lấy thông tin tồn kho cho danh sách productIds: {}", productIds);
+                List<InventoryDTO> inventories = inventoryService.getInventoriesByProductIds(productIds);
+                ApiResponse<List<InventoryDTO>> response = new ApiResponse<>(
+                                HttpStatus.OK.value(),
+                                "Lấy thông tin tồn kho hàng loạt thành công",
+                                inventories);
                 return ResponseEntity.ok(response);
         }
 }
