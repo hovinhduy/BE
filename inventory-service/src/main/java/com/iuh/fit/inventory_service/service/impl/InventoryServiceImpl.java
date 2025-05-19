@@ -273,6 +273,23 @@ public class InventoryServiceImpl implements InventoryService {
                 return inventories.stream().map(this::mapToDTO).collect(Collectors.toList());
         }
 
+        @Override
+        @Transactional
+        public void deleteInventoryByProductId(Long productId) {
+                log.info("Xóa tồn kho cho sản phẩm với ID: {}", productId);
+                Optional<Inventory> inventoryOptional = inventoryRepository.findByProductId(productId);
+                if (inventoryOptional.isPresent()) {
+                        inventoryRepository.deleteByProductId(productId);
+                        log.info("Đã xóa thành công tồn kho cho sản phẩm ID: {}", productId);
+                } else {
+                        log.warn("Không tìm thấy tồn kho để xóa cho sản phẩm ID: {}", productId);
+                        // Optionally, you could throw a NotFoundException here if strictness is
+                        // required
+                        // throw new NotFoundException("Không tìm thấy tồn kho cho sản phẩm có ID: " +
+                        // productId);
+                }
+        }
+
         private InventoryDTO mapToDTO(Inventory inventory) {
                 return InventoryDTO.builder()
                                 .productId(inventory.getProductId())

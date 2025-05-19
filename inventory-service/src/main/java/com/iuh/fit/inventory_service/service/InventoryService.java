@@ -44,4 +44,9 @@ public interface InventoryService {
      * Giảm số lượng tồn kho dựa trên thông tin đơn hàng
      */
     boolean reduceInventory(Long productId, Integer quantity, Long orderId, String orderNumber);
+
+    /**
+     * Xóa tồn kho theo ID sản phẩm.
+     */
+    void deleteInventoryByProductId(Long productId);
 }

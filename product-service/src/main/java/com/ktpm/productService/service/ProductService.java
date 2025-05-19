@@ -89,7 +89,26 @@ public class ProductService {
     }
 
     public Product getProductById(Long id) {
-        return productRepository.findById(id).orElse(null);
+        Product product = productRepository.findById(id).orElse(null);
+        if (product != null) {
+            try {
+                ApiResponse<com.ktpm.productService.dto.client.InventoryDTO> inventoryResponse = inventoryServiceClient
+                        .getInventoryByProductId(id);
+                if (inventoryResponse != null && inventoryResponse.getData() != null) {
+                    product.setQuantity(inventoryResponse.getData().getQuantity());
+                } else {
+                    log.warn(
+                            "Không nhận được dữ liệu tồn kho từ inventory-service cho productId: {}. Đặt số lượng về 0.",
+                            id);
+                    product.setQuantity(0);
+                }
+            } catch (Exception e) {
+                log.error("Lỗi khi gọi inventory-service để lấy số lượng cho productId: {}: {}. Đặt số lượng về 0.", id,
+                        e.getMessage(), e);
+                product.setQuantity(0);
+            }
+        }
+        return product;
     }
 
     public Product saveProduct(Product product) {
@@ -135,6 +154,26 @@ public class ProductService {
     }
 
     public void deleteProduct(Long id) {
+        // Call inventory-service to delete inventory first
+        try {
+            ApiResponse<Void> response = inventoryServiceClient.deleteInventoryByProductId(id);
+            if (response != null && response.getStatus() >= 200 && response.getStatus() < 300) {
+                log.info("Đã xóa thành công tồn kho cho productId: {} từ inventory-service", id);
+            } else {
+                log.warn(
+                        "Xóa tồn kho cho productId: {} từ inventory-service không thành công hoặc không có phản hồi. Status: {}, Message: {}",
+                        id, response != null ? response.getStatus() : "N/A",
+                        response != null ? response.getMessage() : "N/A");
+                // Decide if you want to proceed with product deletion even if inventory
+                // deletion fails
+            }
+        } catch (Exception e) {
+            log.error("Lỗi khi gọi inventory-service để xóa tồn kho cho productId: {}: {}", id, e.getMessage(), e);
+            // Decide if you want to proceed with product deletion even if inventory
+            // deletion fails
+        }
+
         productRepository.deleteById(id);
+        log.info("Đã xóa sản phẩm với ID: {} từ product-service", id);
     }
 }

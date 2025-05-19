@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.iuh.fit.inventory_service.dto.ApiResponse;
@@ -125,6 +126,17 @@ public class InventoryController {
                                 HttpStatus.OK.value(),
                                 "Lấy thông tin tồn kho hàng loạt thành công",
                                 inventories);
+                return ResponseEntity.ok(response);
+        }
+
+        @DeleteMapping("/{productId}")
+        public ResponseEntity<ApiResponse<Void>> deleteInventoryByProductId(@PathVariable Long productId) {
+                log.info("Nhận yêu cầu xóa tồn kho cho sản phẩm ID: {}", productId);
+                inventoryService.deleteInventoryByProductId(productId);
+                ApiResponse<Void> response = new ApiResponse<>(
+                                HttpStatus.OK.value(),
+                                "Xóa tồn kho cho sản phẩm ID " + productId + " thành công",
+                                null);
                 return ResponseEntity.ok(response);
         }
 }
