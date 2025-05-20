@@ -34,20 +34,20 @@ public class PaymentController {
         return ResponseEntity.ok(Map.of("checkoutUrl", checkoutUrl));
     }
 
-    @PostMapping("/callback")
+    @PostMapping("/status")
     public ResponseEntity<String> handleCallback(@RequestBody Map<String, Object> payload) {
-        Long orderId = Long.valueOf(payload.get("orderCode").toString());
-        String status = payload.get("status").toString(); // SUCCESS or CANCEL
+        int orderCode = Integer.parseInt(payload.get("orderCode").toString());
+        String status = payload.get("status").toString(); // PAID or CANCELLED
 
-        Payment updated = paymentService.updateStatus(orderId, status);
+        Payment updated = paymentService.updateStatus(orderCode, status);
 
-        if (updated.getStatus() == PaymentStatus.SUCCESS) {
-            restTemplate.postForEntity(orderCallbackUrl, Map.of(
-                    "orderId", orderId,
-                    "status", "PAID"
-            ), Void.class);
-        }
+//        if (updated.getStatus() == PaymentStatus.SUCCESS) {
+//            restTemplate.postForEntity(orderCallbackUrl, Map.of(
+//                    "orderId", orderId,
+//                    "status", "PAID"
+//            ), Void.class);
+//        }
 
-        return ResponseEntity.ok("Callback received");
+        return ResponseEntity.ok("Update status successfully");
     }
 }

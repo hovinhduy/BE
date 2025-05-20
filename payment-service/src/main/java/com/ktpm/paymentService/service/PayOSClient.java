@@ -46,20 +46,19 @@ public class PayOSClient {
         }
     }
 
-    public String createPaymentUrl(Long orderId, Double amount) {
-        String cancelUrl = "http://localhost:3000/payment-cancel";
-        String returnUrl = "http://localhost:3000/payment-success";
+    public String createPaymentUrl(Long orderId, int orderCode, Double amount) {
+        String cancelUrl = "http://localhost:4200/PaymentCancel";
+        String returnUrl = "http://localhost:4200/PaymentSuccess";
         String description = "Thanh toán đơn hàng #" + orderId;
 
-        String signature = generateSignature(orderId.intValue(), amount.intValue(), cancelUrl, returnUrl, description);
+        String signature = generateSignature(orderCode, amount.intValue(), cancelUrl, returnUrl, description);
 
         Map<String, Object> body = new HashMap<>();
-        body.put("orderCode", orderId.intValue());
+        body.put("orderCode", orderCode);
         body.put("amount", amount.intValue());
         body.put("description", "Thanh toán đơn hàng #" + orderId);
         body.put("returnUrl", returnUrl);
         body.put("cancelUrl", cancelUrl);
-        body.put("callbackUrl", config.getCallbackUrl());
         body.put("signature", signature);
 
         HttpHeaders headers = new HttpHeaders();

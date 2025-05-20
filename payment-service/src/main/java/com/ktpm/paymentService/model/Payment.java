@@ -17,7 +17,9 @@ public class Payment {
     private Long id;
 
     private Long orderId;
+    private Integer orderCode;
     private Double amount;
+    private String paymentUrl;
 
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;

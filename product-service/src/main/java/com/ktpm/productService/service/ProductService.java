@@ -7,6 +7,8 @@ import com.ktpm.productService.model.Product;
 import com.ktpm.productService.repository.CategoryRepository;
 import com.ktpm.productService.repository.ManufactureRepository;
 import com.ktpm.productService.repository.ProductRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -41,6 +43,7 @@ public class ProductService {
         this.inventoryServiceClient = inventoryServiceClient;
     }
 
+    @Cacheable(value = "products", key = "'products_' + #pageable.pageNumber + '_' + #pageable.pageSize")
     public ResultPaginationDTO getAllProducts(Specification<Product> jobSpecification, Pageable pageable) {
         Page<Product> pageProduct = productRepository.findAll(jobSpecification, pageable);
         List<Product> products = pageProduct.getContent();
@@ -111,6 +114,7 @@ public class ProductService {
         return product;
     }
 
+    @CacheEvict(value = "products", allEntries = true)
     public Product saveProduct(Product product) {
         Product savedProduct = productRepository.save(product);
 
@@ -126,6 +130,7 @@ public class ProductService {
         return savedProduct;
     }
 
+    @CacheEvict(value = "products", allEntries = true)
     public Product updateProduct(Product product) {
         Product oldProduct = productRepository.findById(product.getId()).orElse(null);
         if (product.getName() != null) {
@@ -153,6 +158,7 @@ public class ProductService {
         return productRepository.save(oldProduct);
     }
 
+    @CacheEvict(value = "products", allEntries = true)
     public void deleteProduct(Long id) {
         // Call inventory-service to delete inventory first
         try {

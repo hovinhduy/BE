@@ -77,6 +77,14 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>redis.clients</groupId>
+			<artifactId>jedis</artifactId>
+		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.turkraft.springfilter/jpa -->
 		<dependency>
 			<groupId>com.turkraft.springfilter</groupId>

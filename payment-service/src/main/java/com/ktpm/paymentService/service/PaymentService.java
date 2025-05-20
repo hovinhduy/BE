@@ -7,6 +7,7 @@ import com.ktpm.paymentService.repository.PaymentRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 public class PaymentService {
@@ -19,25 +20,41 @@ public class PaymentService {
     }
 
     public String createPaymentAndGetUrl(PaymentRequest request) {
+        Optional<Payment> existing = paymentRepository.findByOrderId(request.getOrderId());
+        if (existing.isPresent()) {
+            return existing.get().getPaymentUrl();
+        }
+
+        int generatedOrderCode = (int) (Math.random() * 10000 + 1000);
+        String paymentUrl = payOSClient.createPaymentUrl(request.getOrderId(), generatedOrderCode, request.getAmount());
+
+        if(paymentUrl == null) {
+            throw new RuntimeException("Failed to create payment URL");
+        }
+
         Payment payment = new Payment();
         payment.setOrderId(request.getOrderId());
         payment.setAmount(request.getAmount());
         payment.setStatus(PaymentStatus.PENDING);
         payment.setCreatedAt(LocalDateTime.now());
+        payment.setPaymentUrl(paymentUrl);
+        payment.setOrderCode(generatedOrderCode);
 
         paymentRepository.save(payment);
 
-        return payOSClient.createPaymentUrl(request.getOrderId(), request.getAmount());
+        return paymentUrl;
     }
 
-    public Payment updateStatus(Long orderId, String status) {
-        Payment payment = paymentRepository.findByOrderId(orderId)
+    public Payment updateStatus(int orderCode, String status) {
+        Payment payment = paymentRepository.findByOrderCode(orderCode)
                 .orElseThrow(() -> new RuntimeException("Payment not found"));
 
-        if (status.equals("SUCCESS")) {
-            payment.setStatus(PaymentStatus.SUCCESS);
+        if (status.equals("PAID")) {
+            payment.setStatus(PaymentStatus.PAID);
+        } else if (status.equals("CANCELLED")) {
+            payment.setStatus(PaymentStatus.CANCELLED);
         } else {
-            payment.setStatus(PaymentStatus.FAILED);
+            throw new RuntimeException("Invalid status");
         }
 
         return paymentRepository.save(payment);
