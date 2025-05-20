@@ -33,7 +33,7 @@ public class Product {
     @Column(name = "sold")
     private Integer sold;
 
-    @OneToMany(mappedBy = "product")
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
     private List<Image> images;
 
     @ManyToOne
