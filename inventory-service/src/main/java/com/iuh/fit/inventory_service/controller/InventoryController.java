@@ -21,6 +21,7 @@ import com.iuh.fit.inventory_service.dto.InventoryCheckRequest;
 import com.iuh.fit.inventory_service.dto.InventoryCheckResponse;
 import com.iuh.fit.inventory_service.dto.InventoryDTO;
 import com.iuh.fit.inventory_service.dto.UpdateInventoryRequest;
+import com.iuh.fit.inventory_service.dto.RestoreInventoryRequest;
 import com.iuh.fit.inventory_service.repository.InventoryRepository;
 import com.iuh.fit.inventory_service.service.InventoryService;
 
@@ -137,6 +138,22 @@ public class InventoryController {
                                 HttpStatus.OK.value(),
                                 "Xóa tồn kho cho sản phẩm ID " + productId + " thành công",
                                 null);
+                return ResponseEntity.ok(response);
+        }
+
+        @PostMapping("/restore")
+        public ResponseEntity<ApiResponse<List<InventoryDTO>>> restoreInventory(
+                        @Valid @RequestBody List<RestoreInventoryRequest> requests) {
+
+                log.info("Nhận yêu cầu hoàn lại tồn kho cho {} sản phẩm", requests.size());
+
+                List<InventoryDTO> updatedInventories = inventoryService.restoreInventory(requests);
+
+                ApiResponse<List<InventoryDTO>> response = new ApiResponse<>(
+                                HttpStatus.OK.value(),
+                                "Hoàn lại tồn kho thành công",
+                                updatedInventories);
+
                 return ResponseEntity.ok(response);
         }
 }

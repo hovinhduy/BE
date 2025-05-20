@@ -16,6 +16,7 @@ import com.iuh.fit.inventory_service.dto.InventoryCheckResponse;
 import com.iuh.fit.inventory_service.dto.InventoryDTO;
 import com.iuh.fit.inventory_service.dto.InventoryUpdateEvent;
 import com.iuh.fit.inventory_service.dto.OrderCreatedEvent;
+import com.iuh.fit.inventory_service.dto.RestoreInventoryRequest;
 import com.iuh.fit.inventory_service.dto.UpdateInventoryRequest;
 import com.iuh.fit.inventory_service.entity.Inventory;
 import com.iuh.fit.inventory_service.exception.NotFoundException;
@@ -288,6 +289,52 @@ public class InventoryServiceImpl implements InventoryService {
                         // throw new NotFoundException("Không tìm thấy tồn kho cho sản phẩm có ID: " +
                         // productId);
                 }
+        }
+
+        @Override
+        @Transactional
+        public List<InventoryDTO> restoreInventory(List<RestoreInventoryRequest> requests) {
+                log.info("Hoàn lại số lượng sản phẩm trong kho cho {} sản phẩm", requests.size());
+
+                List<InventoryDTO> updatedInventories = new ArrayList<>();
+
+                for (RestoreInventoryRequest request : requests) {
+                        try {
+                                Inventory inventory = inventoryRepository.findByProductId(request.getProductId())
+                                                .orElseThrow(() -> new NotFoundException(
+                                                                "Không tìm thấy tồn kho cho sản phẩm ID: "
+                                                                                + request.getProductId()));
+
+                                // Tăng số lượng tồn kho
+                                inventory.setQuantity(inventory.getQuantity() + request.getQuantity());
+                                inventoryRepository.save(inventory);
+
+                                log.info("Đã hoàn lại tồn kho thành công: Product ID: {}, Số lượng hoàn lại: {}, Số lượng mới: {}",
+                                                request.getProductId(), request.getQuantity(), inventory.getQuantity());
+
+                                // Gửi thông báo cập nhật tồn kho qua Kafka nếu có orderNumber
+                                if (request.getOrderNumber() != null && !request.getOrderNumber().isEmpty()) {
+                                        InventoryUpdateEvent updateEvent = InventoryUpdateEvent.builder()
+                                                        .productId(request.getProductId())
+                                                        .quantity(request.getQuantity())
+                                                        .orderNumber(request.getOrderNumber())
+                                                        .success(true)
+                                                        .message("Đã hoàn lại tồn kho thành công khi hủy đơn hàng")
+                                                        .timestamp(LocalDateTime.now())
+                                                        .build();
+
+                                        kafkaTemplate.send(inventoryUpdatedTopic, request.getOrderNumber(),
+                                                        updateEvent);
+                                }
+
+                                updatedInventories.add(mapToDTO(inventory));
+                        } catch (Exception e) {
+                                log.error("Lỗi khi hoàn lại tồn kho cho sản phẩm ID: " + request.getProductId(), e);
+                                // Tiếp tục xử lý các sản phẩm khác
+                        }
+                }
+
+                return updatedInventories;
         }
 
         private InventoryDTO mapToDTO(Inventory inventory) {

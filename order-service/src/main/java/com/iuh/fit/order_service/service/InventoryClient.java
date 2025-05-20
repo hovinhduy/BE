@@ -13,7 +13,10 @@ import org.springframework.web.client.RestTemplate;
 
 import com.iuh.fit.order_service.dto.InventoryCheckRequest;
 import com.iuh.fit.order_service.dto.InventoryCheckResponse;
+import com.iuh.fit.order_service.dto.InventoryDTO;
+import com.iuh.fit.order_service.dto.RestoreInventoryRequest;
 import com.iuh.fit.order_service.entity.CartItem;
+import com.iuh.fit.order_service.entity.OrderItem;
 import com.iuh.fit.order_service.exception.ServiceUnavailableException;
 
 import lombok.RequiredArgsConstructor;
@@ -69,6 +72,30 @@ public class InventoryClient {
             return response.getBody().getData();
         } catch (Exception e) {
             log.error("Lỗi khi kiểm tra tồn kho hàng loạt", e);
+            throw new ServiceUnavailableException("Không thể kết nối đến inventory-service: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Hoàn lại số lượng sản phẩm trong kho khi hủy đơn hàng
+     */
+    public List<InventoryDTO> restoreInventory(List<OrderItem> orderItems, String orderNumber) {
+        try {
+            List<RestoreInventoryRequest> requests = new ArrayList<>();
+            
+            for (OrderItem item : orderItems) {
+                requests.add(new RestoreInventoryRequest(item.getProductId(), item.getQuantity(), orderNumber));
+            }
+            
+            ResponseEntity<ApiResponse<List<InventoryDTO>>> response = restTemplate.exchange(
+                    inventoryServiceUrl + "/restore",
+                    HttpMethod.POST,
+                    new HttpEntity<>(requests),
+                    new ParameterizedTypeReference<ApiResponse<List<InventoryDTO>>>() {});
+            
+            return response.getBody().getData();
+        } catch (Exception e) {
+            log.error("Lỗi khi hoàn lại tồn kho cho đơn hàng: " + orderNumber, e);
             throw new ServiceUnavailableException("Không thể kết nối đến inventory-service: " + e.getMessage());
         }
     }

@@ -241,6 +241,18 @@ public class OrderServiceImpl implements OrderService {
             throw new IllegalArgumentException("Không thể hủy đơn hàng đã giao hoặc đang giao");
         }
         
+        // Hoàn lại tồn kho cho các sản phẩm trong đơn hàng
+        if (order.getStatus() != OrderStatus.CANCELLED) {
+            try {
+                log.info("Hoàn lại tồn kho cho đơn hàng: {}", order.getOrderNumber());
+                inventoryClient.restoreInventory(order.getOrderItems(), order.getOrderNumber());
+                log.info("Đã hoàn lại tồn kho thành công cho đơn hàng: {}", order.getOrderNumber());
+            } catch (Exception e) {
+                log.error("Lỗi khi hoàn lại tồn kho cho đơn hàng: " + order.getOrderNumber(), e);
+                // Vẫn tiếp tục hủy đơn hàng ngay cả khi không thể hoàn lại tồn kho
+            }
+        }
+        
         order.setStatus(OrderStatus.CANCELLED);
         order.setUpdatedAt(LocalDateTime.now());
         

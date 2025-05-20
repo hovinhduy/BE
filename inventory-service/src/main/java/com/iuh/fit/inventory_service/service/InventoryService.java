@@ -7,6 +7,7 @@ import com.iuh.fit.inventory_service.dto.InventoryCheckResponse;
 import com.iuh.fit.inventory_service.dto.InventoryDTO;
 import com.iuh.fit.inventory_service.dto.OrderCreatedEvent;
 import com.iuh.fit.inventory_service.dto.UpdateInventoryRequest;
+import com.iuh.fit.inventory_service.dto.RestoreInventoryRequest;
 import com.iuh.fit.inventory_service.event.ProductCreatedEvent;
 
 public interface InventoryService {
@@ -49,4 +50,9 @@ public interface InventoryService {
      * Xóa tồn kho theo ID sản phẩm.
      */
     void deleteInventoryByProductId(Long productId);
+
+    /**
+     * Hoàn lại số lượng sản phẩm trong kho khi đơn hàng bị hủy
+     */
+    List<InventoryDTO> restoreInventory(List<RestoreInventoryRequest> requests);
 }
