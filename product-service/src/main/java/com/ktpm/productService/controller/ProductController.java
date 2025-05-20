@@ -4,12 +4,10 @@ import com.ktpm.productService.dto.ProductDTO;
 import com.ktpm.productService.dto.response.RestResponse;
 import com.ktpm.productService.dto.response.ResultPaginationDTO;
 import com.ktpm.productService.model.Category;
+import com.ktpm.productService.model.Image;
 import com.ktpm.productService.model.Manufacture;
 import com.ktpm.productService.model.Product;
-import com.ktpm.productService.service.CategoryService;
-import com.ktpm.productService.service.ManufactureService;
-import com.ktpm.productService.service.ProductService;
-import com.ktpm.productService.service.UploadService;
+import com.ktpm.productService.service.*;
 import com.ktpm.productService.utils.annotation.ApiMessage;
 import com.ktpm.productService.utils.error.IdInvalidException;
 import com.turkraft.springfilter.boot.Filter;
@@ -22,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -31,13 +30,15 @@ public class ProductController {
     private final CategoryService categoryService;
     private final ManufactureService manufactureService;
     private final UploadService uploadService;
+    private final ImageService imageService;
 
     public ProductController(ProductService productService, CategoryService categoryService,
-            ManufactureService manufactureService, UploadService uploadService) {
+            ManufactureService manufactureService, UploadService uploadService, ImageService imageService) {
         this.productService = productService;
         this.categoryService = categoryService;
         this.manufactureService = manufactureService;
         this.uploadService = uploadService;
+        this.imageService = imageService;
     }
 
     @GetMapping("/product")
@@ -61,7 +62,7 @@ public class ProductController {
     @ApiMessage("Add new product")
     public ResponseEntity<Product> addProduct(
             @ModelAttribute("product") ProductDTO productDto,
-            @RequestPart(value = "file", required = false) MultipartFile imageFile)
+            @RequestPart(value = "files", required = false) List<MultipartFile> imageFiles)
             throws IdInvalidException, IOException {
         Product product = new Product();
         product.setName(productDto.getName());
@@ -88,23 +89,40 @@ public class ProductController {
             throw new IdInvalidException("Manufacture with id = " + productDto.getManufactureId() + " not found");
         }
         product.setManufacture(manufacture);
-
-        String imageUrl;
-        if (imageFile != null && !imageFile.isEmpty()) {
-            imageUrl = uploadService.uploadFile(imageFile);
-        } else {
-            imageUrl = "https://i.ibb.co/TDvW7DKg/pepe-the-frog-1272162-640.jpg";
-        }
-        product.setImage(imageUrl);
         product.setSold(0);
-        return ResponseEntity.status(HttpStatus.CREATED).body(productService.saveProduct(product));
+        Product savedProduct = productService.saveProduct(product);
+
+        List<Image> listImg = new ArrayList<>();
+        if (imageFiles != null && !imageFiles.isEmpty() && imageFiles.get(0).getSize() > 0) {
+            imageFiles.forEach(
+                    imageFile -> {
+                        try {
+                            String url = uploadService.uploadFile(imageFile);
+                            Image image = new Image(url);
+                            image.setProduct(savedProduct);
+                            imageService.saveImage(image);
+                            listImg.add(image);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+            );
+        } else {
+            Image image = new Image("https://i.ibb.co/TDvW7DKg/pepe-the-frog-1272162-640.jpg");
+            image.setProduct(savedProduct);
+            imageService.saveImage(image);
+            listImg.add(image);
+
+        }
+        savedProduct.setImages(listImg);
+        return ResponseEntity.status(HttpStatus.CREATED).body(productService.saveProduct(savedProduct));
     }
 
     @PutMapping(value = "/product", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ApiMessage("Update product")
     public ResponseEntity<Product> updateProduct(
             @ModelAttribute("product") ProductDTO productDto,
-            @RequestPart(value = "file", required = false) MultipartFile imageFile)
+            @RequestPart(value = "files", required = false) List<MultipartFile> imageFiles)
             throws IdInvalidException, IOException {
         if (productDto.getId() == null) {
             throw new IdInvalidException("Product ID is required");
@@ -148,12 +166,12 @@ public class ProductController {
         }
 
         // Xử lý cập nhật hình ảnh
-        if (imageFile != null && !imageFile.isEmpty()) {
-            String imageUrl = uploadService.uploadFile(imageFile);
-            product.setImage(imageUrl);
+        if (!imageFiles.isEmpty() && imageFiles.get(0).getSize() > 0) {
+            List<Image> imageList = uploadService.uploadManyFiles(imageFiles);
+            product.setImages(imageList);
         } else {
             // Giữ nguyên ảnh cũ nếu không upload ảnh mới
-            product.setImage(product.getImage());
+            product.setImages(product.getImages());
         }
         return ResponseEntity.ok(productService.updateProduct(product));
     }
