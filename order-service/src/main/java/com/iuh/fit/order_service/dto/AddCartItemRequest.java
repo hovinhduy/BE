@@ -1,6 +1,7 @@
 package com.iuh.fit.order_service.dto;
 
-import java.math.BigDecimal;
+// BigDecimal import removed as price field is removed
+// import java.math.BigDecimal; 
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -13,7 +14,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AddCartItemRequest {
     
-//    @NotNull(message = "ID người dùng không được để trống")
+    // userId sẽ được controller set, không phải là một phần của request body từ client.
+    // @NotNull(message = "ID người dùng không được để trống") 
     private Long userId;
     
     @NotNull(message = "ID sản phẩm không được để trống")
@@ -22,10 +24,10 @@ public class AddCartItemRequest {
     @Min(value = 1, message = "Số lượng phải lớn hơn 0")
     private Integer quantity = 1;
     
-    @NotNull(message = "Giá sản phẩm không được để trống")
-    private BigDecimal price;
+    // Trường price đã được loại bỏ. Giá sẽ được lấy từ product-service.
+    // private BigDecimal price;
     
+    // Các trường này cũng không cần thiết cho request body
 //    private String productName;
-//
 //    private String productImage;
 } 

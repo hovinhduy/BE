@@ -24,7 +24,7 @@ public class CartItemDTO {
     @NotNull(message = "Giá sản phẩm không được để trống")
     private BigDecimal price;
     
-    // Các trường bổ sung cho hiển thị
-//    private String productName;
-//    private String productImage;
+    // Các trường bổ sung cho hiển thị, lấy từ product-service
+    private String productName;
+    private String productImage;
 } 
