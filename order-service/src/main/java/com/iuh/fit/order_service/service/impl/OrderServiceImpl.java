@@ -88,11 +88,8 @@ public class OrderServiceImpl implements OrderService {
         Order order = new Order();
         order.setUserId(request.getUserId());
         order.setStatus(OrderStatus.PENDING);
-        order.setShippingAddressId(request.getShippingAddressId());
-        order.setBillingAddressId(request.getBillingAddressId() != null 
-                ? request.getBillingAddressId() : request.getShippingAddressId());
+        order.setShippingAddress(request.getShippingAddress());
         order.setPaymentMethod(request.getPaymentMethod());
-        order.setShippingMethod(request.getShippingMethod());
         order.setNotes(request.getNotes());
         
         // Thêm các sản phẩm từ giỏ hàng vào đơn hàng
@@ -119,14 +116,6 @@ public class OrderServiceImpl implements OrderService {
         order.calculateTotals();
         
         // Áp dụng các khoản phí và giảm giá
-        if (request.getDiscountAmount() != null) {
-            order.setDiscountAmount(request.getDiscountAmount());
-        }
-        
-        if (request.getShippingAmount() != null) {
-            order.setShippingAmount(request.getShippingAmount());
-        }
-        
         if (request.getTaxAmount() != null) {
             order.setTaxAmount(request.getTaxAmount());
         }

@@ -16,20 +16,11 @@ public class CreateOrderRequest {
 //    @NotNull(message = "ID người dùng không được để trống")
     private Long userId;
     
-    @NotNull(message = "ID địa chỉ giao hàng không được để trống")
-    private Long shippingAddressId;
-    
-    private Long billingAddressId;
+    @NotBlank(message = "Địa chỉ giao hàng không được để trống")
+    private String shippingAddress;
     
     @NotBlank(message = "Phương thức thanh toán không được để trống")
     private String paymentMethod;
-    
-    @NotBlank(message = "Phương thức giao hàng không được để trống")
-    private String shippingMethod;
-    
-    private BigDecimal discountAmount;
-    
-    private BigDecimal shippingAmount;
     
     private BigDecimal taxAmount;
     

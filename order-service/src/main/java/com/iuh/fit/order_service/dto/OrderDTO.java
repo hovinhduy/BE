@@ -21,14 +21,10 @@ public class OrderDTO {
     private Long userId;
     private OrderStatus status;
     private BigDecimal totalAmount;
-    private BigDecimal discountAmount;
-    private BigDecimal shippingAmount;
     private BigDecimal taxAmount;
     private BigDecimal finalAmount;
-    private Long shippingAddressId;
-    private Long billingAddressId;
+    private String shippingAddress;
     private String paymentMethod;
-    private String shippingMethod;
     private String notes;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

@@ -26,14 +26,10 @@ public class OrderMapper {
         orderDTO.setUserId(order.getUserId());
         orderDTO.setStatus(order.getStatus());
         orderDTO.setTotalAmount(order.getTotalAmount());
-        orderDTO.setDiscountAmount(order.getDiscountAmount());
-        orderDTO.setShippingAmount(order.getShippingAmount());
         orderDTO.setTaxAmount(order.getTaxAmount());
         orderDTO.setFinalAmount(order.getFinalAmount());
-        orderDTO.setShippingAddressId(order.getShippingAddressId());
-        orderDTO.setBillingAddressId(order.getBillingAddressId());
+        orderDTO.setShippingAddress(order.getShippingAddress());
         orderDTO.setPaymentMethod(order.getPaymentMethod());
-        orderDTO.setShippingMethod(order.getShippingMethod());
         orderDTO.setNotes(order.getNotes());
         orderDTO.setCreatedAt(order.getCreatedAt());
         orderDTO.setUpdatedAt(order.getUpdatedAt());

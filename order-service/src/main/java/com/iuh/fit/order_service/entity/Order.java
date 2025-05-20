@@ -45,29 +45,17 @@ public class Order {
     @Column(name = "total_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal totalAmount;
     
-    @Column(name = "discount_amount", precision = 12, scale = 2)
-    private BigDecimal discountAmount = BigDecimal.ZERO;
-    
-    @Column(name = "shipping_amount", precision = 12, scale = 2)
-    private BigDecimal shippingAmount = BigDecimal.ZERO;
-    
     @Column(name = "tax_amount", precision = 12, scale = 2)
     private BigDecimal taxAmount = BigDecimal.ZERO;
     
     @Column(name = "final_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal finalAmount;
     
-    @Column(name = "shipping_address_id")
-    private Long shippingAddressId;
-    
-    @Column(name = "billing_address_id")
-    private Long billingAddressId;
+    @Column(name = "shipping_address", columnDefinition = "TEXT")
+    private String shippingAddress;
     
     @Column(name = "payment_method")
     private String paymentMethod;
-    
-    @Column(name = "shipping_method")
-    private String shippingMethod;
     
     @Column(columnDefinition = "TEXT")
     private String notes;
@@ -124,8 +112,6 @@ public class Order {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
                 
         this.finalAmount = this.totalAmount
-                .subtract(this.discountAmount)
-                .add(this.shippingAmount)
                 .add(this.taxAmount);
     }
 } 
