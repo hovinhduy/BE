@@ -56,28 +56,28 @@ public class CartController {
         return new ResponseEntity<>(ApiResponse.success("Thêm sản phẩm vào giỏ hàng thành công", cart), HttpStatus.CREATED);
     }
     
-    @PutMapping("/items/{id}")
+    @PutMapping("/items/{productId}")
     @Operation(summary = "Cập nhật số lượng sản phẩm trong giỏ hàng")
     public ResponseEntity<ApiResponse<CartDTO>> updateCartItem(
-            @PathVariable Long id,
+            @PathVariable String productId,
             @Valid @RequestBody UpdateCartItemRequest request) {
         Long userId = securityUtils.getCurrentUserId();
         
         // Gán userId từ token vào request
         request.setUserId(userId);
         
-        log.info("Cập nhật số lượng sản phẩm trong giỏ hàng: {}", id);
-        CartDTO cart = cartService.updateCartItem(id, request);
+        log.info("Cập nhật số lượng sản phẩm {} trong giỏ hàng của người dùng {}", productId, userId);
+        CartDTO cart = cartService.updateCartItemByProductId(productId, request);
         return ResponseEntity.ok(ApiResponse.success("Cập nhật giỏ hàng thành công", cart));
     }
     
-    @DeleteMapping("/items/{id}")
+    @DeleteMapping("/items/{productId}")
     @Operation(summary = "Xóa sản phẩm khỏi giỏ hàng")
-    public ResponseEntity<ApiResponse<Void>> removeCartItem(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> removeCartItem(@PathVariable String productId) {
         Long userId = securityUtils.getCurrentUserId();
         
-        log.info("Xóa sản phẩm {} khỏi giỏ hàng của người dùng {}", id, userId);
-        cartService.removeCartItem(id, userId);
+        log.info("Xóa sản phẩm {} khỏi giỏ hàng của người dùng {}", productId, userId);
+        cartService.removeCartItemByProductId(productId, userId);
         return ResponseEntity.ok(ApiResponse.success("Xóa sản phẩm khỏi giỏ hàng thành công", null));
     }
     

@@ -13,7 +13,11 @@ public interface CartService {
     
     CartDTO updateCartItem(Long itemId, UpdateCartItemRequest request);
     
+    CartDTO updateCartItemByProductId(String productId, UpdateCartItemRequest request);
+    
     void removeCartItem(Long itemId, Long userId);
+    
+    void removeCartItemByProductId(String productId, Long userId);
     
     void clearCart(Long userId);
     

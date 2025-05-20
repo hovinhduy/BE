@@ -202,6 +202,57 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional
+    public CartDTO updateCartItemByProductId(String productId, UpdateCartItemRequest request) {
+        Cart cart = getCartEntityByUserId(request.getUserId());
+
+        CartItem cartItem = cart.getCartItems().stream()
+                .filter(item -> item.getProductId().toString().equals(productId)) // So sánh productId
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("CartItem", "productId", productId));
+        
+        // Kiểm tra lại xem cartItem có thực sự thuộc về cart này không (thường là thừa nếu stream từ cart.getCartItems())
+        // if (!cartItem.getCart().getId().equals(cart.getId())) {
+        //     log.warn("Sản phẩm ID {} không thuộc giỏ hàng ID {} của người dùng ID {}", productId, cart.getId(), request.getUserId());
+        //     throw new IllegalArgumentException("Sản phẩm không thuộc giỏ hàng của người dùng này");
+        // }
+        
+        cartItem.setQuantity(request.getQuantity());
+        // Giá không đổi khi chỉ cập nhật số lượng, vì giá gốc đã được lưu khi thêm vào giỏ
+        cartItemRepository.save(cartItem); // Lưu thay đổi của CartItem
+        
+        cart.setUpdatedAt(LocalDateTime.now());
+        Cart savedCart = cartRepository.save(cart); // Lưu thay đổi của Cart (ví dụ: updatedAt)
+        
+        log.info("Đã cập nhật số lượng cho sản phẩm ID {} thành {} trong giỏ hàng của người dùng ID {}", 
+                productId, request.getQuantity(), request.getUserId());
+        return buildEnrichedCartDTO(savedCart);
+    }
+
+    @Override
+    @Transactional
+    public void removeCartItemByProductId(String productId, Long userId) {
+        Cart cart = getCartEntityByUserId(userId);
+        
+        CartItem cartItem = cart.getCartItems().stream()
+            .filter(item -> item.getProductId().toString().equals(productId))
+            .findFirst()
+            .orElseThrow(() -> new ResourceNotFoundException("CartItem", "productId", productId));
+
+        // if (!cartItem.getCart().getId().equals(cart.getId())) {
+        //     log.warn("Sản phẩm ID {} không thuộc giỏ hàng ID {} của người dùng ID {}", productId, cart.getId(), userId);
+        //     throw new IllegalArgumentException("Sản phẩm không thuộc giỏ hàng của người dùng này");
+        // }
+        
+        cart.removeCartItem(cartItem); // Quan trọng để JPA xử lý orphanRemoval và mối quan hệ
+        // cartItemRepository.delete(cartItem); // Không cần thiết nếu orphanRemoval = true và cascade hoạt động đúng
+        
+        cart.setUpdatedAt(LocalDateTime.now());
+        cartRepository.save(cart); // Lưu cart sẽ kích hoạt cascade và orphan removal
+        log.info("Đã xóa sản phẩm ID {} khỏi giỏ hàng của người dùng ID {}", productId, userId);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public Cart getCartEntityByUserId(Long userId) {
         return getOrCreateCart(userId);
