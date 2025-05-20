@@ -166,9 +166,22 @@ public class ProductController {
         }
 
         // Xử lý cập nhật hình ảnh
-        if (!imageFiles.isEmpty() && imageFiles.get(0).getSize() > 0) {
-            List<Image> imageList = uploadService.uploadManyFiles(imageFiles);
-            product.setImages(imageList);
+        if (imageFiles != null && !imageFiles.isEmpty() && imageFiles.get(0).getSize() > 0) {
+            List<Image> listImg = new ArrayList<>();
+            imageFiles.forEach(
+                    imageFile -> {
+                        try {
+                            String url = uploadService.uploadFile(imageFile);
+                            Image image = new Image(url);
+                            image.setProduct(product);
+                            imageService.saveImage(image);
+                            listImg.add(image);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+            );
+            product.setImages(listImg);
         } else {
             // Giữ nguyên ảnh cũ nếu không upload ảnh mới
             product.setImages(product.getImages());

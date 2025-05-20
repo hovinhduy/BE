@@ -3,8 +3,10 @@ package com.ktpm.productService.service;
 import com.ktpm.productService.dto.event.ProductCreatedEvent;
 import com.ktpm.productService.dto.response.ResultPaginationDTO;
 import com.ktpm.productService.model.Category;
+import com.ktpm.productService.model.Image;
 import com.ktpm.productService.model.Product;
 import com.ktpm.productService.repository.CategoryRepository;
+import com.ktpm.productService.repository.ImageRepository;
 import com.ktpm.productService.repository.ManufactureRepository;
 import com.ktpm.productService.repository.ProductRepository;
 import org.springframework.cache.annotation.CacheEvict;
@@ -27,6 +29,7 @@ import org.slf4j.LoggerFactory;
 @Service
 public class ProductService {
     private final ProductRepository productRepository;
+    private final ImageRepository imageRepository;
     private final ManufactureRepository manufactureRepository;
     private final CategoryRepository categoryRepository;
     private final KafkaProducerService kafkaProducerService;
@@ -35,8 +38,9 @@ public class ProductService {
 
     public ProductService(ProductRepository productRepository, ManufactureRepository manufactureRepository,
             CategoryRepository categoryRepository, KafkaProducerService kafkaProducerService,
-            InventoryServiceClient inventoryServiceClient) {
+            InventoryServiceClient inventoryServiceClient, ImageRepository imageRepository) {
         this.productRepository = productRepository;
+        this.imageRepository = imageRepository;
         this.manufactureRepository = manufactureRepository;
         this.categoryRepository = categoryRepository;
         this.kafkaProducerService = kafkaProducerService;
@@ -178,7 +182,10 @@ public class ProductService {
             // Decide if you want to proceed with product deletion even if inventory
             // deletion fails
         }
-
+        List<Image> listImg = imageRepository.findByProductId(id);
+        for (Image image : listImg) {
+            imageRepository.delete(image);
+        }
         productRepository.deleteById(id);
         log.info("Đã xóa sản phẩm với ID: {} từ product-service", id);
     }
