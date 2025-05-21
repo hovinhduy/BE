@@ -18,8 +18,9 @@ jobs:
         run: |
           ls -la
           find . -type f
-          echo "Kiểm tra Dockerfile trong eureka-server"
+          echo "Kiểm tra thư mục eureka-server"
           ls -la eureka-server
+          echo "Nội dung Dockerfile"
           cat eureka-server/Dockerfile
 
       - name: Set up JDK 17
@@ -42,8 +43,7 @@ jobs:
             echo "Lỗi: DOCKER_USERNAME không được thiết lập"
             exit 1
           fi
-          # Kiểm tra ký tự không hợp lệ
-          echo "Kiểm tra DOCKER_USERNAME có ký tự xuống dòng hoặc khoảng trắng"
+          echo "Kiểm tra ký tự trong DOCKER_USERNAME"
           echo "${{ secrets.DOCKER_USERNAME }}" | od -c
 
       - name: Set up Docker Buildx
@@ -62,15 +62,21 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image for eureka-server
+      - name: Build eureka-server (test without push)
         run: |
-          echo "Xây dựng eureka-server"
+          echo "Xây dựng eureka-server (không push)"
+          echo "Lệnh: docker buildx build --platform linux/amd64 -t ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest ./eureka-server"
+          docker buildx build --platform linux/amd64 -t ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest ./eureka-server
+          if [ $? -ne 0 ]; then
+            echo "Lỗi khi build eureka-server, thử lệnh build thông thường"
+            docker build -t ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest ./eureka-server
+          fi
+
+      - name: Build and push eureka-server
+        run: |
+          echo "Xây dựng và đẩy eureka-server"
           echo "Lệnh: docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest ./eureka-server"
           docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest ./eureka-server
-          if [ $? -ne 0 ]; then
-            echo "Lỗi khi build eureka-server, thử build không push"
-            docker buildx build --platform linux/amd64 -t ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest ./eureka-server
-          fi
 
       - name: Build and push other Docker images
         run: |
