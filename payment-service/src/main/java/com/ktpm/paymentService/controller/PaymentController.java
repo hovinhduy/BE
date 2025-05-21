@@ -4,6 +4,7 @@ import com.ktpm.paymentService.dto.PaymentRequest;
 import com.ktpm.paymentService.model.Payment;
 import com.ktpm.paymentService.model.PaymentStatus;
 import com.ktpm.paymentService.service.PaymentService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -54,25 +55,36 @@ public class PaymentController {
     }
 
     @GetMapping("/status/{id}")
-    public ResponseEntity<String> handleCheckStatus(@PathVariable("id") Integer orderCode) {
+    public ResponseEntity<String> handleCheckStatus(
+            @PathVariable("id") Integer orderCode,
+            HttpServletRequest servletRequest
+    ) {
         if (orderCode == null) {
             return ResponseEntity.badRequest().body("orderCode is null");
         }
-        Long orderId = paymentService.getOrderIdByOrderCode(orderCode);
 
+        Long orderId = paymentService.getOrderIdByOrderCode(orderCode);
         String status = paymentService.checkStatus(orderId);
+
         if ("CANCELLED".equals(status)) {
+            // Lấy token từ header Authorization
+            String token = servletRequest.getHeader("Authorization");
+
             // Tạo URL có chứa query params
             String url = UriComponentsBuilder
                     .fromHttpUrl(orderCallbackUrl + "/api/orders/" + orderId + "/cancel")
                     .queryParam("reason", "Thanh toán đã bị hủy")
                     .toUriString();
 
+            // Tạo headers và gắn token
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", token); // token đã bao gồm "Bearer ..."
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+
             try {
-                // Gửi PUT request không có body
-                restTemplate.put(url, null);
+                restTemplate.exchange(url, HttpMethod.PUT, entity, Void.class);
             } catch (Exception e) {
-                e.printStackTrace(); // Log lỗi nếu cần
+                e.printStackTrace();
             }
         }
 
