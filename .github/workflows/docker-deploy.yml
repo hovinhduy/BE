@@ -16,6 +16,7 @@ jobs:
 
       - name: Kiểm tra cấu trúc thư mục sau khi checkout
         run: |
+          pwd
           ls -la
           find . -type f
 
@@ -37,14 +38,18 @@ jobs:
 
       - name: Build and push Docker images
         run: |
-          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest ./eureka-server
-          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/gateway-service:latest ./gateway-service
-          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/user-service:latest ./user-service
-          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/product-service:latest ./product-service
-          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/order-service:latest ./order-service
-          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/inventory-service:latest ./inventory-service
-          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/payment-service:latest ./payment-service
-          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/ai-chat-service:latest ./ai-chat-service
+          for service in eureka-server gateway-service user-service product-service order-service inventory-service payment-service ai-chat-service; do
+            if [ -d "./BE/$service" ]; then
+              echo "✅ Building $service..."
+              docker buildx build \
+                --platform linux/amd64 \
+                --push \
+                -t ${{ secrets.DOCKER_USERNAME }}/$service:latest \
+                ./BE/$service
+            else
+              echo "❌ Skipping $service: directory not found"
+            fi
+          done
 
       - name: Deploy to server
         uses: appleboy/ssh-action@master
@@ -57,7 +62,6 @@ jobs:
             cd /path/to/deployment
             git pull
 
-            # Pull latest images from Docker Hub
             docker pull ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/gateway-service:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/user-service:latest
@@ -67,6 +71,5 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/payment-service:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/ai-chat-service:latest
 
-            # Restart all services
             docker-compose down
             docker-compose up -d
