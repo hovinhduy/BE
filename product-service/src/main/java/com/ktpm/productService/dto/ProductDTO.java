@@ -2,6 +2,8 @@ package com.ktpm.productService.dto;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class ProductDTO {
     private Long id;
@@ -10,7 +12,10 @@ public class ProductDTO {
     private String shortDesc;
     private String detailDesc;
     private Integer quantity;
+    private List<ImageDTO> images;
+    private CategoryDTO category;
+    private ManufactureDTO manufacture;
+    private Integer sold;
     private Long categoryId;
     private Long manufactureId;
-    private Integer sold;
 }

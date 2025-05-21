@@ -1,5 +1,9 @@
 package com.ktpm.productService.service;
 
+import com.ktpm.productService.dto.CategoryDTO;
+import com.ktpm.productService.dto.ImageDTO;
+import com.ktpm.productService.dto.ManufactureDTO;
+import com.ktpm.productService.dto.ProductDTO;
 import com.ktpm.productService.dto.event.ProductCreatedEvent;
 import com.ktpm.productService.dto.response.ResultPaginationDTO;
 import com.ktpm.productService.model.Category;
@@ -14,6 +18,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,29 +39,36 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final KafkaProducerService kafkaProducerService;
     private final InventoryServiceClient inventoryServiceClient;
+    private final RedisTemplate<String, Object> redisTemplate;
     private static final Logger log = LoggerFactory.getLogger(ProductService.class);
 
     public ProductService(ProductRepository productRepository, ManufactureRepository manufactureRepository,
             CategoryRepository categoryRepository, KafkaProducerService kafkaProducerService,
-            InventoryServiceClient inventoryServiceClient, ImageRepository imageRepository) {
+            InventoryServiceClient inventoryServiceClient, ImageRepository imageRepository,
+                          RedisTemplate<String, Object> redisTemplate) {
         this.productRepository = productRepository;
         this.imageRepository = imageRepository;
         this.manufactureRepository = manufactureRepository;
         this.categoryRepository = categoryRepository;
         this.kafkaProducerService = kafkaProducerService;
         this.inventoryServiceClient = inventoryServiceClient;
+        this.redisTemplate = redisTemplate;
+    }
+
+    public void clearProductCache() {
+        redisTemplate.delete("products_0_20");
     }
 
     @Cacheable(value = "products", key = "'products_' + #pageable.pageNumber + '_' + #pageable.pageSize")
-    public ResultPaginationDTO getAllProducts(Specification<Product> jobSpecification, Pageable pageable) {
+    public ResultPaginationDTO<ProductDTO> getAllProducts(Specification<Product> jobSpecification, Pageable pageable) {
         Page<Product> pageProduct = productRepository.findAll(jobSpecification, pageable);
         List<Product> products = pageProduct.getContent();
 
         if (products != null && !products.isEmpty()) {
             List<Long> productIds = products.stream().map(Product::getId).collect(Collectors.toList());
             try {
-                ApiResponse<List<com.ktpm.productService.dto.client.InventoryDTO>> inventoryResponse = inventoryServiceClient
-                        .getInventoriesByProductIds(productIds);
+                ApiResponse<List<com.ktpm.productService.dto.client.InventoryDTO>> inventoryResponse =
+                        inventoryServiceClient.getInventoriesByProductIds(productIds);
 
                 if (inventoryResponse != null && inventoryResponse.getData() != null) {
                     Map<Long, Integer> inventoryMap = inventoryResponse.getData().stream()
@@ -68,29 +80,29 @@ public class ProductService {
                         product.setQuantity(inventoryMap.getOrDefault(product.getId(), 0));
                     });
                 } else {
-                    log.warn(
-                            "Không nhận được dữ liệu tồn kho từ inventory-service hoặc dữ liệu rỗng cho productIds: {}. Đặt số lượng về 0.",
-                            productIds);
+                    log.warn("Không nhận được dữ liệu tồn kho, đặt quantity = 0");
                     products.forEach(product -> product.setQuantity(0));
                 }
             } catch (Exception e) {
-                log.error("Lỗi khi gọi inventory-service để lấy số lượng cho productIds: {}: {}. Đặt số lượng về 0.",
-                        productIds, e.getMessage(), e);
+                log.error("Lỗi khi gọi inventory-service: {}", e.getMessage(), e);
                 products.forEach(product -> product.setQuantity(0));
             }
         }
 
-        ResultPaginationDTO rs = new ResultPaginationDTO();
+        // Ánh xạ sang DTO
+        List<ProductDTO> productDTOs = products.stream().map(this::mapToDTO).toList();
+
+        // Trả về kết quả phân trang
+        ResultPaginationDTO<ProductDTO> rs = new ResultPaginationDTO<>();
         ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
 
         meta.setPage(pageable.getPageNumber());
         meta.setPageSize(pageable.getPageSize());
-
         meta.setPages(pageProduct.getTotalPages());
         meta.setTotal(pageProduct.getTotalElements());
 
         rs.setMeta(meta);
-        rs.setResult(products);
+        rs.setResult(productDTOs);
 
         return rs;
     }
@@ -189,4 +201,25 @@ public class ProductService {
         productRepository.deleteById(id);
         log.info("Đã xóa sản phẩm với ID: {} từ product-service", id);
     }
+
+    private ProductDTO mapToDTO(Product product) {
+        ProductDTO dto = new ProductDTO();
+        dto.setId(product.getId());
+        dto.setName(product.getName());
+        dto.setPrice(product.getPrice());
+        dto.setDetailDesc(product.getDetailDesc());
+        dto.setShortDesc(product.getShortDesc());
+        dto.setQuantity(product.getQuantity());
+        dto.setSold(product.getSold());
+
+        dto.setImages(product.getImages().stream()
+                .map(img -> new ImageDTO(img.getId(), img.getUrl()))
+                .collect(Collectors.toList()));
+
+        dto.setCategory(new CategoryDTO(product.getCategory().getId(), product.getCategory().getName()));
+        dto.setManufacture(new ManufactureDTO(product.getManufacture().getId(), product.getManufacture().getName()));
+
+        return dto;
+    }
+
 }
