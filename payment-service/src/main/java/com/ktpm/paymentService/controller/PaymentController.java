@@ -20,7 +20,7 @@ public class PaymentController {
     private final PaymentService paymentService;
     private final RestTemplate restTemplate;
 
-    public PaymentController(PaymentService paymentService, RestTemplate restTemplate){
+    public PaymentController(PaymentService paymentService, RestTemplate restTemplate) {
         this.paymentService = paymentService;
         this.restTemplate = restTemplate;
     }
@@ -41,12 +41,12 @@ public class PaymentController {
 
         Payment updated = paymentService.updateStatus(orderCode, status);
 
-//        if (updated.getStatus() == PaymentStatus.SUCCESS) {
-//            restTemplate.postForEntity(orderCallbackUrl, Map.of(
-//                    "orderId", orderId,
-//                    "status", "PAID"
-//            ), Void.class);
-//        }
+        // if (updated.getStatus() == PaymentStatus.SUCCESS) {
+        // restTemplate.postForEntity(orderCallbackUrl, Map.of(
+        // "orderId", orderId,
+        // "status", "PAID"
+        // ), Void.class);
+        // }
 
         return ResponseEntity.ok("Update status successfully");
     }

@@ -17,17 +17,18 @@ import java.util.Map;
 @Service
 public class PayOSClient {
     private final PayOSConfig config;
-    public PayOSClient(PayOSConfig config){
+
+    public PayOSClient(PayOSConfig config) {
         this.config = config;
     }
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    public String generateSignature(Integer orderCode, Integer amount, String cancelUrl, String returnUrl, String description) {
+    public String generateSignature(Integer orderCode, Integer amount, String cancelUrl, String returnUrl,
+            String description) {
         String rawData = String.format(
                 "amount=%d&cancelUrl=%s&description=%s&orderCode=%d&returnUrl=%s",
-                amount, cancelUrl, description, orderCode, returnUrl
-        );
+                amount, cancelUrl, description, orderCode, returnUrl);
 
         try {
             Mac hmacSha256 = Mac.getInstance("HmacSHA256");
@@ -68,8 +69,7 @@ public class PayOSClient {
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
         ResponseEntity<Map> response = restTemplate.postForEntity(
-                "https://api-merchant.payos.vn/v2/payment-requests", request, Map.class
-        );
+                "https://api-merchant.payos.vn/v2/payment-requests", request, Map.class);
 
         Map<?, ?> responseBody = response.getBody();
         if (responseBody == null || responseBody.get("data") == null) {

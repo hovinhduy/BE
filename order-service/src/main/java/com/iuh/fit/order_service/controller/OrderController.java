@@ -1,12 +1,17 @@
 package com.iuh.fit.order_service.controller;
 
 import java.util.List;
+import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,11 +21,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 
 import com.iuh.fit.order_service.dto.ApiResponse;
 import com.iuh.fit.order_service.dto.CreateOrderRequest;
 import com.iuh.fit.order_service.dto.OrderDTO;
 import com.iuh.fit.order_service.dto.OrderHistoryDTO;
+import com.iuh.fit.order_service.dto.PaymentRequestDTO;
 import com.iuh.fit.order_service.entity.OrderStatus;
 import com.iuh.fit.order_service.security.SecurityUtils;
 import com.iuh.fit.order_service.service.OrderService;
@@ -40,6 +47,10 @@ public class OrderController {
     
     private final OrderService orderService;
     private final SecurityUtils securityUtils;
+    private final RestTemplate restTemplate;
+    
+    @Value("${app.payment-service.url}")
+    private String paymentServiceUrl;
     
     @PostMapping
     @Operation(summary = "Tạo đơn hàng mới từ giỏ hàng hiện tại")
@@ -51,6 +62,41 @@ public class OrderController {
         
         log.info("Tạo đơn hàng mới cho người dùng: {}", userId);
         OrderDTO order = orderService.createOrder(request);
+        
+        // Gọi payment-service để tạo URL thanh toán
+        try {
+            PaymentRequestDTO paymentRequest = new PaymentRequestDTO();
+            paymentRequest.setOrderId(order.getId());
+            paymentRequest.setAmount(order.getFinalAmount().doubleValue());
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<PaymentRequestDTO> requestEntity = new HttpEntity<>(paymentRequest, headers);
+            
+            ResponseEntity<Map> paymentResponse = restTemplate.postForEntity(
+                    paymentServiceUrl + "/api/payments/payos", 
+                    requestEntity, 
+                    Map.class);
+            
+            log.info("Payment service response: {}", paymentResponse.getBody());
+            
+            if (paymentResponse.getStatusCode().is2xxSuccessful() && paymentResponse.getBody() != null) {
+                log.info("Đã tạo URL thanh toán thành công cho đơn hàng: {}", order.getId());
+                // Lấy checkoutUrl trực tiếp từ response body
+                String checkoutUrl = (String) paymentResponse.getBody().get("checkoutUrl");
+                if (checkoutUrl != null) {
+                    order.setPaymentUrl(checkoutUrl);
+                    log.info("URL thanh toán: {}", checkoutUrl);
+                } else {
+                    log.warn("Không tìm thấy checkoutUrl trong response");
+                }
+            } else {
+                log.error("Không thể tạo URL thanh toán cho đơn hàng: {}", order.getId());
+            }
+        } catch (Exception e) {
+            log.error("Lỗi khi gọi payment-service: {}", e.getMessage());
+        }
+        
         return new ResponseEntity<>(ApiResponse.success("Tạo đơn hàng thành công", order), HttpStatus.CREATED);
     }
     

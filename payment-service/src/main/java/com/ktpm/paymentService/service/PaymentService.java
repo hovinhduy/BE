@@ -28,7 +28,7 @@ public class PaymentService {
         int generatedOrderCode = (int) (Math.random() * 10000 + 1000);
         String paymentUrl = payOSClient.createPaymentUrl(request.getOrderId(), generatedOrderCode, request.getAmount());
 
-        if(paymentUrl == null) {
+        if (paymentUrl == null) {
             throw new RuntimeException("Failed to create payment URL");
         }
 
