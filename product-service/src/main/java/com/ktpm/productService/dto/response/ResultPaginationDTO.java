@@ -1,6 +1,6 @@
 package com.ktpm.productService.dto.response;
 
-public class ResultPaginationDTO {
+public class ResultPaginationDTO<T> {
     private Meta meta;
     private  Object result;
 

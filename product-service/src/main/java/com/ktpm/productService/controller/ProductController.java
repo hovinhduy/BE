@@ -198,4 +198,10 @@ public class ProductController {
         productService.deleteProduct(id);
         return ResponseEntity.ok().body(null);
     }
+
+    @GetMapping("/product/clear-cache")
+    public ResponseEntity<String> clearCache() {
+        productService.clearProductCache();
+        return ResponseEntity.ok("Đã xóa cache Redis");
+    }
 }

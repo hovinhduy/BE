@@ -1,10 +1,7 @@
 package com.ktpm.paymentService.service;
 
 import com.ktpm.paymentService.config.PayOSConfig;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -58,6 +55,9 @@ public class PayOSClient {
         body.put("orderCode", orderCode);
         body.put("amount", amount.intValue());
         body.put("description", "Thanh toán đơn hàng #" + orderId);
+        //Thời gian hết hạn của link thanh toán, là Unix Timestamp và kiểu Int32
+        int expiredAt = (int) (System.currentTimeMillis() / 1000) + 300;
+        body.put("expiredAt", expiredAt);
         body.put("returnUrl", returnUrl);
         body.put("cancelUrl", cancelUrl);
         body.put("signature", signature);
@@ -83,5 +83,33 @@ public class PayOSClient {
         }
         System.out.println("PayOS response: " + response.getBody());
         return data.get("checkoutUrl").toString();
+    }
+
+    public String getPaymentStatus(int orderCode) {
+
+        String url = "https://api-merchant.payos.vn/v2/payment-requests/" + orderCode;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("x-client-id", config.getClientId());
+        headers.set("x-api-key", config.getApiKey());
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<Void> request = new HttpEntity<>(headers);
+        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, request, Map.class);
+
+        Map<?, ?> responseBody = response.getBody();
+        if (responseBody == null || responseBody.get("data") == null) {
+            throw new RuntimeException("Không nhận được phản hồi hợp lệ từ PayOS: " + responseBody);
+        }
+
+        Map<?, ?> data = (Map<?, ?>) responseBody.get("data");
+
+        Object status = data.get("status");
+        if (status == null) {
+            throw new RuntimeException("Không có trạng thái (status) trong phản hồi: " + data);
+        }
+
+        System.out.println("PayOS status response: " + data);
+        return status.toString(); // Ví dụ: PAID, PENDING, CANCELLED
     }
 }

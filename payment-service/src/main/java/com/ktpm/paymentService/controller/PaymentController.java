@@ -6,10 +6,7 @@ import com.ktpm.paymentService.model.PaymentStatus;
 import com.ktpm.paymentService.service.PaymentService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
@@ -49,5 +46,13 @@ public class PaymentController {
         // }
 
         return ResponseEntity.ok("Update status successfully");
+    }
+
+    @GetMapping("/status/{id}")
+    public ResponseEntity<String> handleCheckStatus(@PathVariable("id") Long orderId) {
+        if(orderId == null) {
+            return ResponseEntity.badRequest().body("orderId is null");
+        }
+        return ResponseEntity.ok(paymentService.checkStatus(orderId));
     }
 }
