@@ -54,10 +54,11 @@ public class PaymentController {
     }
 
     @GetMapping("/status/{id}")
-    public ResponseEntity<String> handleCheckStatus(@PathVariable("id") Long orderId) {
-        if (orderId == null) {
-            return ResponseEntity.badRequest().body("orderId is null");
+    public ResponseEntity<String> handleCheckStatus(@PathVariable("id") Integer orderCode) {
+        if (orderCode == null) {
+            return ResponseEntity.badRequest().body("orderCode is null");
         }
+        Long orderId = paymentService.getOrderIdByOrderCode(orderCode);
 
         String status = paymentService.checkStatus(orderId);
         if ("CANCELLED".equals(status)) {

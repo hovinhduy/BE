@@ -86,4 +86,9 @@ public class PaymentService {
 
         return status;
     }
+
+    public Long getOrderIdByOrderCode(int orderCode){
+        Payment payment = paymentRepository.findByOrderCode(orderCode).orElse(null);
+        return payment.getOrderId();
+    }
 }
