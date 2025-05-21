@@ -54,6 +54,7 @@ public class WebhookService {
         // Kiểm tra tính hợp lệ của URL
         if (!isValidUrl(webhookUrl)) {
             log.error("URL webhook không hợp lệ: {}. URL phải bắt đầu bằng https://", webhookUrl);
+            logManualRegistrationInstructions();
             return WebhookResponse.builder()
                     .code("400")
                     .desc("Webhook URL không hợp lệ. URL phải bắt đầu bằng https://")
@@ -89,6 +90,7 @@ public class WebhookService {
                         .build();
             } catch (HttpClientErrorException.BadRequest e) {
                 log.error("PayOS từ chối webhook URL: {}", e.getResponseBodyAsString());
+                logManualRegistrationInstructions();
                 return WebhookResponse.builder()
                         .code("400")
                         .desc("Webhook URL bị từ chối bởi PayOS: " + e.getResponseBodyAsString())
@@ -97,6 +99,7 @@ public class WebhookService {
             }
         } catch (Exception e) {
             log.error("Lỗi khi đăng ký webhook với PayOS", e);
+            logManualRegistrationInstructions();
             return WebhookResponse.builder()
                     .code("500")
                     .desc("Lỗi khi đăng ký webhook: " + e.getMessage())
@@ -124,7 +127,7 @@ public class WebhookService {
     /**
      * Hiển thị hướng dẫn đăng ký webhook thủ công
      */
-    private void logManualRegistrationInstructions() {
+    public void logManualRegistrationInstructions() {
         log.warn("------------------------------------------------------------");
         log.warn("KHÔNG THỂ ĐĂNG KÝ WEBHOOK TỰ ĐỘNG VỚI PAYOS");
         log.warn("Vui lòng đăng ký webhook thủ công bằng cách:");
