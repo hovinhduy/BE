@@ -68,6 +68,22 @@ public class PaymentService {
         Payment payment = paymentRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new RuntimeException("Payment not found"));
 
-        return payOSClient.getPaymentStatus(payment.getOrderCode());
+        String status = payOSClient.getPaymentStatus(payment.getOrderCode());
+
+        // Cập nhật trạng thái thanh toán nếu là CANCELLED
+        if (status.equals("CANCELLED")) {
+            payment.setStatus(PaymentStatus.CANCELLED);
+            paymentRepository.save(payment);
+        }
+        if (status.equals("PAID")) {
+            payment.setStatus(PaymentStatus.PAID);
+            paymentRepository.save(payment);
+        }
+        if (status.equals("PENDING")) {
+            payment.setStatus(PaymentStatus.PENDING);
+            paymentRepository.save(payment);
+        }
+
+        return status;
     }
 }

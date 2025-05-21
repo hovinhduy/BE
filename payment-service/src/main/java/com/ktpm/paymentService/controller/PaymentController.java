@@ -5,9 +5,14 @@ import com.ktpm.paymentService.model.Payment;
 import com.ktpm.paymentService.model.PaymentStatus;
 import com.ktpm.paymentService.service.PaymentService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Map;
 
@@ -50,9 +55,27 @@ public class PaymentController {
 
     @GetMapping("/status/{id}")
     public ResponseEntity<String> handleCheckStatus(@PathVariable("id") Long orderId) {
-        if(orderId == null) {
+        if (orderId == null) {
             return ResponseEntity.badRequest().body("orderId is null");
         }
-        return ResponseEntity.ok(paymentService.checkStatus(orderId));
+
+        String status = paymentService.checkStatus(orderId);
+        if ("CANCELLED".equals(status)) {
+            // Tạo URL có chứa query params
+            String url = UriComponentsBuilder
+                    .fromHttpUrl(orderCallbackUrl + "/api/orders/" + orderId + "/cancel")
+                    .queryParam("reason", "Thanh toán đã bị hủy")
+                    .toUriString();
+
+            try {
+                // Gửi PUT request không có body
+                restTemplate.put(url, null);
+            } catch (Exception e) {
+                e.printStackTrace(); // Log lỗi nếu cần
+            }
+        }
+
+        return ResponseEntity.ok(status);
     }
+
 }
