@@ -38,14 +38,15 @@ jobs:
 
       - name: Build and push Docker images
         run: |
+          cd BE/BE
           for service in eureka-server gateway-service user-service product-service order-service inventory-service payment-service ai-chat-service; do
-            if [ -d "./BE/BE/$service" ]; then
+            if [ -d "$service" ]; then
               echo "✅ Building $service..."
               docker buildx build \
                 --platform linux/amd64 \
                 --push \
                 -t ${{ secrets.DOCKER_USERNAME }}/$service:latest \
-                ./BE/BE/$service
+                ./$service
             else
               echo "❌ Skipping $service: directory not found"
             fi
