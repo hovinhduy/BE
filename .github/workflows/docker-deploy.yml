@@ -7,8 +7,8 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
-    environment: "product"
+    runs-on: self-hosted
+    environment: "product" # Nếu bạn dùng environment secrets
 
     steps:
       - name: Checkout code
@@ -18,10 +18,6 @@ jobs:
         run: |
           ls -la
           find . -type f
-          echo "Kiểm tra thư mục eureka-server"
-          ls -la eureka-server
-          echo "Nội dung Dockerfile"
-          cat eureka-server/Dockerfile
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
@@ -30,31 +26,8 @@ jobs:
           distribution: "temurin"
           cache: maven
 
-      - name: Build Maven projects
-        run: |
-          mvn clean package -DskipTests
-          echo "Kiểm tra tệp JAR trong eureka-server"
-          ls -la eureka-server/target || echo "Thư mục target không tồn tại"
-
-      - name: Kiểm tra DOCKER_USERNAME
-        run: |
-          echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}"
-          if [ -z "${{ secrets.DOCKER_USERNAME }}" ]; then
-            echo "Lỗi: DOCKER_USERNAME không được thiết lập"
-            exit 1
-          fi
-          echo "Kiểm tra ký tự trong DOCKER_USERNAME"
-          echo "${{ secrets.DOCKER_USERNAME }}" | od -c
-
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Kiểm tra thông tin Docker
-        run: |
-          docker info
-          docker version
-          docker buildx version
-          docker buildx ls
+        uses: docker/setup-buildx-action@v2
 
       - name: Login to Docker Hub
         uses: docker/login-action@v2
@@ -62,34 +35,16 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build eureka-server (test without push)
+      - name: Build and push Docker images
         run: |
-          echo "Xây dựng eureka-server (không push)"
-          echo "Lệnh: docker buildx build --platform linux/amd64 -t ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest ./eureka-server"
-          docker buildx build --platform linux/amd64 -t ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest ./eureka-server
-          if [ $? -ne 0 ]; then
-            echo "Lỗi khi build eureka-server, thử lệnh build thông thường"
-            docker build -t ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest ./eureka-server
-          fi
-
-      - name: Build and push eureka-server
-        run: |
-          echo "Xây dựng và đẩy eureka-server"
-          echo "Lệnh: docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest ./eureka-server"
           docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest ./eureka-server
-
-      - name: Build and push other Docker images
-        run: |
-          echo "Xây dựng các dịch vụ khác"
-          for service in gateway-service user-service product-service order-service inventory-service payment-service ai-chat-service; do
-            echo "Xây dựng $service"
-            echo "Lệnh: docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/$service:latest ./$service"
-            docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/$service:latest ./$service
-            if [ $? -ne 0 ]; then
-              echo "Lỗi khi build $service"
-              exit 1
-            fi
-          done
+          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/gateway-service:latest ./gateway-service
+          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/user-service:latest ./user-service
+          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/product-service:latest ./product-service
+          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/order-service:latest ./order-service
+          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/inventory-service:latest ./inventory-service
+          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/payment-service:latest ./payment-service
+          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/ai-chat-service:latest ./ai-chat-service
 
       - name: Deploy to server
         uses: appleboy/ssh-action@master
@@ -101,6 +56,8 @@ jobs:
           script: |
             cd /path/to/deployment
             git pull
+
+            # Pull latest images from Docker Hub
             docker pull ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/gateway-service:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/user-service:latest
@@ -109,5 +66,8 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/inventory-service:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/payment-service:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/ai-chat-service:latest
+
+            # Restart all services
             docker-compose down
             docker-compose up -d
+thêm self-hosted
