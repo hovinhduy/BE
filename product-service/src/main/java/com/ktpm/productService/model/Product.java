@@ -21,7 +21,7 @@ public class Product {
     @Column(name = "price")
     private Double price;
 
-    @Column(name = "detailDesc")
+    @Column(name = "detailDesc", columnDefinition = "MEDIUMTEXT")
     private String detailDesc;
 
     @Column(name = "shortDesc")
