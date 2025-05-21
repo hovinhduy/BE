@@ -8,7 +8,7 @@ on:
 jobs:
   build-and-deploy:
     runs-on: self-hosted
-    environment: "product" # Nếu bạn dùng environment secrets
+    environment: "product"
 
     steps:
       - name: Checkout code
