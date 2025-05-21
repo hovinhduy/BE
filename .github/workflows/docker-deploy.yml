@@ -121,5 +121,3 @@ jobs:
 
             echo "Starting services with latest images..."
             docker-compose up -d
-
-            echo "Deployment completed!"
