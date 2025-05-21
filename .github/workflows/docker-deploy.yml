@@ -12,112 +12,61 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Check directory structure
+      - name: Kiểm tra cấu trúc thư mục sau khi checkout
         run: |
-          echo "Current directory contents:"
           ls -la
-          echo "All files and directories:"
-          find . -type d -name "*service*" -o -name "eureka*" | head -20
+          find . -type f
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v3
         with:
           java-version: "17"
           distribution: "temurin"
           cache: maven
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v2
 
       - name: Login to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Verify service directories exist
-        run: |
-          services=("eureka-server" "gateway-service" "user-service" "product-service" "order-service" "inventory-service" "payment-service" "ai-chat-service")
-          for service in "${services[@]}"; do
-            if [ -d "./$service" ]; then
-              echo "✅ $service directory exists"
-              if [ -f "./$service/Dockerfile" ]; then
-                echo "✅ $service/Dockerfile exists"
-              else
-                echo "❌ $service/Dockerfile missing"
-              fi
-            else
-              echo "❌ $service directory missing"
-            fi
-          done
-
       - name: Build and push Docker images
         run: |
-          # Function to build and push if directory exists
-          build_and_push() {
-            local service=$1
-            if [ -d "./$service" ] && [ -f "./$service/Dockerfile" ]; then
-              echo "Building $service..."
-              docker buildx build \
-                --platform linux/amd64 \
-                --push \
-                -t ${{ secrets.DOCKER_USERNAME }}/$service:latest \
-                ./$service
-            else
-              echo "Skipping $service - directory or Dockerfile not found"
-            fi
-          }
-
-          # Build each service
-          build_and_push "eureka-server"
-          build_and_push "gateway-service"
-          build_and_push "user-service"
-          build_and_push "product-service"
-          build_and_push "order-service"
-          build_and_push "inventory-service"
-          build_and_push "payment-service"
-          build_and_push "ai-chat-service"
+          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest ./eureka-server
+          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/gateway-service:latest ./gateway-service
+          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/user-service:latest ./user-service
+          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/product-service:latest ./product-service
+          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/order-service:latest ./order-service
+          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/inventory-service:latest ./inventory-service
+          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/payment-service:latest ./payment-service
+          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/ai-chat-service:latest ./ai-chat-service
 
       - name: Deploy to server
-        uses: appleboy/ssh-action@v0.1.7
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
-            # Navigate to deployment directory
             cd /path/to/deployment
-
-            # Pull latest code
-            git pull origin main
-
-            # Function to pull image if it exists on Docker Hub
-            pull_if_exists() {
-              local service=$1
-              echo "Attempting to pull $service..."
-              if docker pull ${{ secrets.DOCKER_USERNAME }}/$service:latest; then
-                echo "✅ Successfully pulled $service"
-              else
-                echo "⚠️  Failed to pull $service (might not exist)"
-              fi
-            }
+            git pull
 
             # Pull latest images from Docker Hub
-            pull_if_exists "eureka-server"
-            pull_if_exists "gateway-service"
-            pull_if_exists "user-service"
-            pull_if_exists "product-service"
-            pull_if_exists "order-service"
-            pull_if_exists "inventory-service"
-            pull_if_exists "payment-service"
-            pull_if_exists "ai-chat-service"
+            docker pull ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/gateway-service:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/user-service:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/product-service:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/order-service:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/inventory-service:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/payment-service:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/ai-chat-service:latest
 
-            # Restart services
-            echo "Stopping existing services..."
+            # Restart all services
             docker-compose down
-
-            echo "Starting services with latest images..."
             docker-compose up -d
