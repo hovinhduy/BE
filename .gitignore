@@ -62,7 +62,7 @@ target/
 # Bỏ qua các file class
 *.class
 
-*.yml
+docker-compose.yml
 
 .idea/
 
