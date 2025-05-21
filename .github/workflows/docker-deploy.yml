@@ -70,4 +70,3 @@ jobs:
             # Restart all services
             docker-compose down
             docker-compose up -d
-thêm self-hosted
