@@ -18,6 +18,9 @@ jobs:
         run: |
           ls -la
           find . -type f
+          echo "Kiểm tra Dockerfile trong eureka-server"
+          ls -la eureka-server
+          cat eureka-server/Dockerfile
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
@@ -29,6 +32,8 @@ jobs:
       - name: Build Maven projects
         run: |
           mvn clean package -DskipTests
+          echo "Kiểm tra tệp JAR trong eureka-server"
+          ls -la eureka-server/target || echo "Thư mục target không tồn tại"
 
       - name: Kiểm tra DOCKER_USERNAME
         run: |
@@ -37,6 +42,9 @@ jobs:
             echo "Lỗi: DOCKER_USERNAME không được thiết lập"
             exit 1
           fi
+          # Kiểm tra ký tự không hợp lệ
+          echo "Kiểm tra DOCKER_USERNAME có ký tự xuống dòng hoặc khoảng trắng"
+          echo "${{ secrets.DOCKER_USERNAME }}" | od -c
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -54,15 +62,25 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker images
+      - name: Build and push Docker image for eureka-server
         run: |
-          echo "Xây dựng images cho user: ${{ secrets.DOCKER_USERNAME }}"
-          for service in eureka-server gateway-service user-service product-service order-service inventory-service payment-service ai-chat-service; do
-            if [ -d "$service" ]; then
-              echo "Xây dựng $service"
-              docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/$service:latest ./$service
-            else
-              echo "Thư mục $service không tồn tại"
+          echo "Xây dựng eureka-server"
+          echo "Lệnh: docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest ./eureka-server"
+          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest ./eureka-server
+          if [ $? -ne 0 ]; then
+            echo "Lỗi khi build eureka-server, thử build không push"
+            docker buildx build --platform linux/amd64 -t ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest ./eureka-server
+          fi
+
+      - name: Build and push other Docker images
+        run: |
+          echo "Xây dựng các dịch vụ khác"
+          for service in gateway-service user-service product-service order-service inventory-service payment-service ai-chat-service; do
+            echo "Xây dựng $service"
+            echo "Lệnh: docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/$service:latest ./$service"
+            docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/$service:latest ./$service
+            if [ $? -ne 0 ]; then
+              echo "Lỗi khi build $service"
               exit 1
             fi
           done
