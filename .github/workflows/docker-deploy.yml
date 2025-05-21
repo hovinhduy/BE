@@ -14,6 +14,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Kiểm tra cấu trúc thư mục sau khi checkout
+        run: |
+          ls -la
+          find . -type f
+
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
@@ -30,17 +35,16 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker images
+      - name: Build and push all Docker images
         run: |
-          # Build and push Docker images using buildx
-          cd ./eureka-server && docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest .
-          cd ../gateway-service && docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/gateway-service:latest .
-          cd ../user-service && docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/user-service:latest .
-          cd ../product-service && docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/product-service:latest .
-          cd ../order-service && docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/order-service:latest .
-          cd ../inventory-service && docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/inventory-service:latest .
-          cd ../payment-service && docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/payment-service:latest .
-          cd ../ai-chat-service && docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/ai-chat-service:latest .
+          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest ./eureka-server
+          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/gateway-service:latest ./gateway-service
+          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/user-service:latest ./user-service
+          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/product-service:latest ./product-service
+          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/order-service:latest ./order-service
+          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/inventory-service:latest ./inventory-service
+          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/payment-service:latest ./payment-service
+          docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/ai-chat-service:latest ./ai-chat-service
 
       - name: Deploy to server
         uses: appleboy/ssh-action@master
