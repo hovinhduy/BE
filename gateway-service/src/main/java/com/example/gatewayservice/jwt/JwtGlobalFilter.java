@@ -34,7 +34,9 @@ public class JwtGlobalFilter implements GlobalFilter {
     private static final String[] WHITELIST = {
             "/auth/login",
             "/auth/register",
-            "/api/product"
+            "/api/product",
+            "/api/category",
+            "/api/manufacture",
     };
 
     @Override

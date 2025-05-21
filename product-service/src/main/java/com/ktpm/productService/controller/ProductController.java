@@ -204,4 +204,32 @@ public class ProductController {
         productService.clearProductCache();
         return ResponseEntity.ok("Đã xóa cache Redis");
     }
+
+    @GetMapping("/product/category/{id}")
+    @ApiMessage("Get product by Category Id")
+    public ResponseEntity<ResultPaginationDTO> getAllProductsByCategoryId(
+            @PathVariable("id") Long id, @Filter Specification<Product> spec, Pageable pageable) throws IdInvalidException {
+        if(id == null){
+            throw new IdInvalidException("Category ID is required");
+        }
+        Category category = categoryService.getCategoryById(id);
+        if(category == null){
+            throw new IdInvalidException("Category with id = " + id + " not found");
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(productService.getAllProductsByCategory(category, spec, pageable));
+    }
+
+    @GetMapping("/product/manufacture/{id}")
+    @ApiMessage("Get product by Manufacture Id")
+    public ResponseEntity<ResultPaginationDTO> getAllProductsByManufactureId(
+            @PathVariable("id") Long id, @Filter Specification<Product> spec, Pageable pageable) throws IdInvalidException {
+        if(id == null){
+            throw new IdInvalidException("Manufacture ID is required");
+        }
+        Manufacture manufacture = manufactureService.getManufactureById(id);
+        if(manufacture == null){
+            throw new IdInvalidException("Manufacture with id = " + id + " not found");
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(productService.getAllProductsByManufacture(manufacture, spec, pageable));
+    }
 }

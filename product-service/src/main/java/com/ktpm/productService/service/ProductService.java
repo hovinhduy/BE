@@ -8,6 +8,7 @@ import com.ktpm.productService.dto.event.ProductCreatedEvent;
 import com.ktpm.productService.dto.response.ResultPaginationDTO;
 import com.ktpm.productService.model.Category;
 import com.ktpm.productService.model.Image;
+import com.ktpm.productService.model.Manufacture;
 import com.ktpm.productService.model.Product;
 import com.ktpm.productService.repository.CategoryRepository;
 import com.ktpm.productService.repository.ImageRepository;
@@ -222,4 +223,98 @@ public class ProductService {
         return dto;
     }
 
+    public ResultPaginationDTO<ProductDTO> getAllProductsByCategory(Category category, Specification<Product> productSpecification, Pageable pageable) {
+
+        Page<Product> pageProduct = productRepository.findByCategory(category,productSpecification, pageable);
+        List<Product> products = pageProduct.getContent();
+
+        if (products != null && !products.isEmpty()) {
+            List<Long> productIds = products.stream().map(Product::getId).collect(Collectors.toList());
+            try {
+                ApiResponse<List<com.ktpm.productService.dto.client.InventoryDTO>> inventoryResponse = inventoryServiceClient
+                        .getInventoriesByProductIds(productIds);
+
+                if (inventoryResponse != null && inventoryResponse.getData() != null) {
+                    Map<Long, Integer> inventoryMap = inventoryResponse.getData().stream()
+                            .collect(Collectors.toMap(com.ktpm.productService.dto.client.InventoryDTO::getProductId,
+                                    com.ktpm.productService.dto.client.InventoryDTO::getQuantity,
+                                    (oldValue, newValue) -> newValue));
+
+                    products.forEach(product -> {
+                        product.setQuantity(inventoryMap.getOrDefault(product.getId(), 0));
+                    });
+                } else {
+                    log.warn(
+                            "Không nhận được dữ liệu tồn kho từ inventory-service hoặc dữ liệu rỗng cho productIds: {}. Đặt số lượng về 0.",
+                            productIds);
+                    products.forEach(product -> product.setQuantity(0));
+                }
+            } catch (Exception e) {
+                log.error("Lỗi khi gọi inventory-service để lấy số lượng cho productIds: {}: {}. Đặt số lượng về 0.",
+                        productIds, e.getMessage(), e);
+                products.forEach(product -> product.setQuantity(0));
+            }
+        }
+
+        ResultPaginationDTO rs = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+
+        meta.setPage(pageable.getPageNumber());
+        meta.setPageSize(pageable.getPageSize());
+
+        meta.setPages(pageProduct.getTotalPages());
+        meta.setTotal(pageProduct.getTotalElements());
+
+        rs.setMeta(meta);
+        rs.setResult(products);
+
+        return rs;
+    }
+
+    public ResultPaginationDTO<ProductDTO> getAllProductsByManufacture(Manufacture manufacture, Specification<Product> productSpecification, Pageable pageable) {
+        Page<Product> pageProduct = productRepository.findByManufacture(manufacture, productSpecification, pageable);
+        List<Product> products = pageProduct.getContent();
+
+        if (products != null && !products.isEmpty()) {
+            List<Long> productIds = products.stream().map(Product::getId).collect(Collectors.toList());
+            try {
+                ApiResponse<List<com.ktpm.productService.dto.client.InventoryDTO>> inventoryResponse = inventoryServiceClient
+                        .getInventoriesByProductIds(productIds);
+
+                if (inventoryResponse != null && inventoryResponse.getData() != null) {
+                    Map<Long, Integer> inventoryMap = inventoryResponse.getData().stream()
+                            .collect(Collectors.toMap(com.ktpm.productService.dto.client.InventoryDTO::getProductId,
+                                    com.ktpm.productService.dto.client.InventoryDTO::getQuantity,
+                                    (oldValue, newValue) -> newValue));
+
+                    products.forEach(product -> {
+                        product.setQuantity(inventoryMap.getOrDefault(product.getId(), 0));
+                    });
+                } else {
+                    log.warn(
+                            "Không nhận được dữ liệu tồn kho từ inventory-service hoặc dữ liệu rỗng cho productIds: {}. Đặt số lượng về 0.",
+                            productIds);
+                    products.forEach(product -> product.setQuantity(0));
+                }
+            } catch (Exception e) {
+                log.error("Lỗi khi gọi inventory-service để lấy số lượng cho productIds: {}: {}. Đặt số lượng về 0.",
+                        productIds, e.getMessage(), e);
+                products.forEach(product -> product.setQuantity(0));
+            }
+        }
+
+        ResultPaginationDTO rs = new ResultPaginationDTO();
+        ResultPaginationDTO.Meta meta = new ResultPaginationDTO.Meta();
+
+        meta.setPage(pageable.getPageNumber());
+        meta.setPageSize(pageable.getPageSize());
+
+        meta.setPages(pageProduct.getTotalPages());
+        meta.setTotal(pageProduct.getTotalElements());
+
+        rs.setMeta(meta);
+        rs.setResult(products);
+
+        return rs;
+    }
 }
