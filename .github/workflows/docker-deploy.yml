@@ -16,18 +16,18 @@ jobs:
 
       - name: Kiểm tra thư mục sau khi checkout
         run: |
-          pwd
+          echo "Thư mục hiện tại: $(pwd)"
           ls -la
           find . -type f
 
       - name: Debug BE directory
         run: |
-          echo "Current directory: $(pwd)"
+          echo "Thư mục hiện tại: $(pwd)"
           if [ -d "BE" ]; then
-            echo "BE directory exists"
+            echo "Thư mục BE tồn tại"
             ls -la BE
           else
-            echo "BE directory does not exist"
+            echo "Thư mục BE không tồn tại"
             exit 1
           fi
 
@@ -49,6 +49,7 @@ jobs:
       - name: Build and push Docker images
         working-directory: BE
         run: |
+          echo "Thư mục hiện tại: $(pwd)"
           for service in eureka-server gateway-service user-service product-service order-service inventory-service payment-service ai-chat-service; do
             if [ -d "./$service" ]; then
               echo "✅ Building $service..."
@@ -58,7 +59,7 @@ jobs:
                 -t ${{ secrets.DOCKER_USERNAME }}/$service:latest \
                 ./$service
             else
-              echo "❌ Skipping $service: directory not found"
+              echo "❌ Skipping $service: thư mục không tồn tại"
             fi
           done
 
