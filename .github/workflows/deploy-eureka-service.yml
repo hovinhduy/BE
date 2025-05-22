@@ -45,7 +45,7 @@ jobs:
 
       - name: Build Docker image for Service Eureka
         run: |
-          docker build -t ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:latest eureka-service/ # Chỉ định thư mục build context
+          docker build -t ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:latest eureka-server/ # Chỉ định thư mục build context
 
       - name: Push Docker image for Service Eureka
         run: |
