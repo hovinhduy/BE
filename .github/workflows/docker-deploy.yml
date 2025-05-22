@@ -46,10 +46,9 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-            - name: Build and push Docker images
-              # Đã bỏ working-directory: BE vì gây dư BE/BE
-              run: |
-                echo "Thư mục hiện tại: $(pwd)"
+      - name: Build and push Docker images
+        run: |
+          echo "Thư mục hiện tại: $(pwd)"
                 if [ -d "./BE" ]; then
                   cd BE
                   for service in eureka-server gateway-service user-service product-service order-service inventory-service payment-service ai-chat-service; do
@@ -68,7 +67,6 @@ jobs:
                   echo "❌ Thư mục BE không tồn tại"
                   exit 1
                 fi
-
 
       - name: Deploy to server
         uses: appleboy/ssh-action@master
