@@ -11,7 +11,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - name: Build the Docker image
-       run: docker build ./user-service --file ./user-service/Dockerfile --tag my-image-name:$(date +%s)
-
+    - uses: actions/checkout@v4
+    - name: Build the Docker image
+        run: docker build ./user-service --file ./user-service/Dockerfile --tag my-image-name:$(date +%s)
