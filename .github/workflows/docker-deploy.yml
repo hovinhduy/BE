@@ -27,6 +27,7 @@ jobs:
   build-and-deploy:
     name: Build & Push All Microservices
     runs-on: ubuntu-latest
+    environment: "product"
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - name: Checkout source
