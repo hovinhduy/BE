@@ -8,7 +8,7 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    environment: "product" # Nếu bạn dùng environment secrets
+    environment: "product"
 
     steps:
       - name: Checkout code
@@ -20,6 +20,9 @@ jobs:
           java-version: "17"
           distribution: "temurin"
           cache: maven
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -33,8 +36,13 @@ jobs:
       - name: Build and push Docker images
         run: |
           for service in eureka-server gateway-service user-service product-service order-service inventory-service payment-service ai-chat-service; do
-            docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/$service:latest ./$service
+            if [ -d "./$service" ]; then
+              docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/$service:latest ./$service
+            else
+              echo "Thư mục $service không tồn tại, bỏ qua..."
+            fi
           done
+
       - name: Deploy to server
         uses: appleboy/ssh-action@master
         with:
@@ -45,7 +53,6 @@ jobs:
           script: |
             cd /path/to/deployment
             git pull
-            # Pull latest images from Docker Hub
             docker pull ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/gateway-service:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/user-service:latest
@@ -54,6 +61,5 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/inventory-service:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/payment-service:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/ai-chat-service:latest
-            # Restart all services
             docker-compose down
             docker-compose up -d
