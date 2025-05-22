@@ -32,15 +32,9 @@ jobs:
 
       - name: Build and push Docker images
         run: |
-          # Build and push Docker images using buildx
-          docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest 
-          docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/gateway-service:latest 
-          docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/user-service:latest 
-          docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/product-service:latest 
-          docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/order-service:latest 
-          docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/inventory-service:latest 
-          docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/payment-service:latest 
-          docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/ai-chat-service:latest
+          for service in eureka-server gateway-service user-service product-service order-service inventory-service payment-service ai-chat-service; do
+            docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/$service:latest ./$service
+          done
       - name: Deploy to server
         uses: appleboy/ssh-action@master
         with:
