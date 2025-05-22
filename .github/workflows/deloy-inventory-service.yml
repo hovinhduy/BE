@@ -1,4 +1,4 @@
-name: Deploy Gateway Service
+name: Deploy Inventory Service
 
 on:
   push:
@@ -65,12 +65,12 @@ jobs:
             echo "Pulling latest Docker image for ${{ env.SERVICE_NAME }}..."
             docker pull ${{env.DOCKER_IMAGE_NAME}}:latest
 
-            echo "Stopping existing container for ${{ env.SERVICE_NAME }} (if any)..."
-            if [ "$(docker ps -q -f name=${{ env.SERVICE_NAME }})" ]; then
-              docker stop ${{ env.SERVICE_NAME }}
-              docker rm ${{ env.SERVICE_NAME }}
+            echo "Stopping and removing existing container (if any)..."
+            if [ "$(docker ps -a -q -f name=^/${{ env.SERVICE_NAME }}$)" ]; then
+              docker stop ${{ env.SERVICE_NAME }} || true
+              docker rm ${{ env.SERVICE_NAME }} || true
             fi
 
             echo "Running new container for ${{ env.SERVICE_NAME }}..."
-            docker run -d --name ${{ env.SERVICE_NAME }} -p ${{ env.SERVICE_PORT }}:8761 ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:latest
+            docker run -d --name ${{ env.SERVICE_NAME }} -p ${{ env.SERVICE_PORT }}:8083 ${{ env.DOCKER_REGISTRY }}/${{ env.DOCKER_IMAGE_NAME }}:latest
             echo "Deployment of ${{ env.SERVICE_NAME }} completed!"

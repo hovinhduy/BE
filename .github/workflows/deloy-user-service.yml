@@ -1,4 +1,4 @@
-name: Deploy Service A
+name: Deploy User Service
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
     paths: # Kích hoạt chỉ khi có thay đổi trong thư mục service-a/
       - "user-service/**"
-      - ".github/workflows/docker-deploy.yml" # Cũng kích hoạt nếu thay đổi workflow này
+      - ".github/workflows/deloy-user-service.yml" # Cũng kích hoạt nếu thay đổi workflow này
 
 env:
   SERVICE_NAME: user-service # Tên của service
@@ -65,10 +65,10 @@ jobs:
             echo "Pulling latest Docker image for ${{ env.SERVICE_NAME }}..."
             docker pull ${{env.DOCKER_IMAGE_NAME}}:latest
 
-            echo "Stopping existing container for ${{ env.SERVICE_NAME }} (if any)..."
-            if [ "$(docker ps -q -f name=${{ env.SERVICE_NAME }})" ]; then
-              docker stop ${{ env.SERVICE_NAME }}
-              docker rm ${{ env.SERVICE_NAME }}
+            echo "Stopping and removing existing container (if any)..."
+            if [ "$(docker ps -a -q -f name=^/${{ env.SERVICE_NAME }}$)" ]; then
+              docker stop ${{ env.SERVICE_NAME }} || true
+              docker rm ${{ env.SERVICE_NAME }} || true
             fi
 
             echo "Running new container for ${{ env.SERVICE_NAME }}..."
