@@ -9,8 +9,8 @@ on:
       - ".github/workflows/deploy-eureka-service.yml" # Cũng kích hoạt nếu thay đổi workflow này
 
 env:
-  SERVICE_NAME: eureka-service # Tên của service
-  DOCKER_IMAGE_NAME: yughiohazx/eureka-service # Tên Docker image
+  SERVICE_NAME: eureka-server # Tên của service
+  DOCKER_IMAGE_NAME: yughiohazx/eureka-server # Tên Docker image
   DOCKER_REGISTRY: docker.io # Hoặc docker.io
   # Cổng mà service này sẽ chạy trên server
   SERVICE_PORT: 8761
