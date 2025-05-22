@@ -13,7 +13,7 @@ env:
   DOCKER_IMAGE_NAME: yughiohazx/gateway-service # Tên Docker image
   DOCKER_REGISTRY: docker.io # Hoặc docker.io
   # Cổng mà service này sẽ chạy trên server
-  SERVICE_PORT: 8761
+  SERVICE_PORT: 8090
 
 jobs:
   build-and-deploy:
