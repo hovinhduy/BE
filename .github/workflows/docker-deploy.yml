@@ -33,7 +33,6 @@ jobs:
       - name: Build and push Docker images
         run: |
           # Build and push Docker images using buildx
-          cd BE
           docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest 
           docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/gateway-service:latest 
           docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/user-service:latest 
