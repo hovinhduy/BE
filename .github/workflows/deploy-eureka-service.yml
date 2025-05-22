@@ -33,7 +33,7 @@ jobs:
 
       - name: Build Service A with Maven
         run: |
-          cd eureka-service # Di chuyển vào thư mục của service
+          cd eureka-server # Di chuyển vào thư mục của service
           mvn clean package -DskipTests
 
       - name: Log in to Docker Registry
