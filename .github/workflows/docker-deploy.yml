@@ -37,7 +37,8 @@ jobs:
         run: |
           for service in eureka-server gateway-service user-service product-service order-service inventory-service payment-service ai-chat-service; do
             if [ -d "./$service" ]; then
-              docker buildx build --platform linux/amd64 --push -t ${{ secrets.DOCKER_USERNAME }}/$service:latest ./$service
+              docker build -t ${{ secrets.DOCKER_USERNAME }}/$service:latest ./$service
+              docker push ${{ secrets.DOCKER_USERNAME }}/$service:latest
             else
               echo "Thư mục $service không tồn tại, bỏ qua..."
             fi
