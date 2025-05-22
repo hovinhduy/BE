@@ -33,14 +33,15 @@ jobs:
       - name: Build and push Docker images
         run: |
           # Build and push Docker images using buildx
-          docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest ./BE/BE/eureka-server
-          docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/gateway-service:latest ./BE/BE/gateway-service
-          docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/user-service:latest ./BE/BE/user-service
-          docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/product-service:latest ./BE/BE/product-service
-          docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/order-service:latest ./BE/BE/order-service
-          docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/inventory-service:latest ./BE/BE/inventory-service
-          docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/payment-service:latest ./BE/BE/payment-service
-          docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/ai-chat-service:latest ./BE/BE/ai-chat-service
+          cd BE
+          docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest 
+          docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/gateway-service:latest 
+          docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/user-service:latest 
+          docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/product-service:latest 
+          docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/order-service:latest 
+          docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/inventory-service:latest 
+          docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/payment-service:latest 
+          docker buildx build --push -t ${{ secrets.DOCKER_USERNAME }}/ai-chat-service:latest
       - name: Deploy to server
         uses: appleboy/ssh-action@master
         with:
