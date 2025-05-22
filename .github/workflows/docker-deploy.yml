@@ -20,6 +20,17 @@ jobs:
           ls -la
           find . -type f
 
+      - name: Debug BE directory
+        run: |
+          echo "Current directory: $(pwd)"
+          if [ -d "BE" ]; then
+            echo "BE directory exists"
+            ls -la BE
+          else
+            echo "BE directory does not exist"
+            exit 1
+          fi
+
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
@@ -36,7 +47,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push Docker images
-        working-directory: ./BE
+        working-directory: BE
         run: |
           for service in eureka-server gateway-service user-service product-service order-service inventory-service payment-service ai-chat-service; do
             if [ -d "./$service" ]; then
@@ -61,7 +72,6 @@ jobs:
           script: |
             cd /path/to/deployment
             git pull
-
             docker pull ${{ secrets.DOCKER_USERNAME }}/eureka-server:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/gateway-service:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/user-service:latest
@@ -70,6 +80,5 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/inventory-service:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/payment-service:latest
             docker pull ${{ secrets.DOCKER_USERNAME }}/ai-chat-service:latest
-
             docker-compose down
             docker-compose up -d
