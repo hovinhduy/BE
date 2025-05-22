@@ -11,6 +11,7 @@ jobs:
   build:
     name: Build Docker Images (No Push for PR)
     runs-on: ubuntu-latest
+    environment: "product"
     if: github.event_name == 'pull_request'
     steps:
       - name: Checkout source
